@@ -47,3 +47,4 @@ zurücksetzen geht im Profil ganz unten.
 
 Prototyp zum Testen. Für den App Store fehlen: echtes Backend/Account, Hintergrund-Push
 (Service Worker bzw. natives Wrapping über Capacitor), Kalender-Import und ein Datenschutzkonzept.
+# sparflamme
