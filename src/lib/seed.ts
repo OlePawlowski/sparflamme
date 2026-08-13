@@ -48,6 +48,7 @@ const defaultProfile: Profile = {
   warnThreshold: 25,
   stopThreshold: 10,
   notificationsEnabled: false,
+  checkInDisplay: 'single',
 }
 
 export function seedState(): AppState {

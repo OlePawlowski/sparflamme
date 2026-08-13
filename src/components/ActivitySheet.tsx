@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Sheet } from './Sheet'
 import { useStore } from '../store'
 import { ACTIVITY_ICONS, Icon, type IconName } from './Icon'
+import { guessIcon } from '../lib/iconGuess'
 import type { Activity, Category } from '../types'
 
 const CAT_LABEL: Record<Category, string> = {
@@ -26,9 +27,16 @@ export function ActivitySheet({
 }) {
   const { upsertActivity, removeActivity } = useStore()
   const [name, setName] = useState(activity?.name ?? '')
-  const [icon, setIcon] = useState<IconName>((activity?.icon as IconName) ?? 'dot')
   const [category, setCategory] = useState<Category>(activity?.category ?? defaultCategory ?? 'red')
   const [rate, setRate] = useState(Math.abs(activity?.ratePer30 ?? 5))
+  const [iconOffset, setIconOffset] = useState(0)
+
+  // Symbol wird aus dem Namen erraten – kein manuelles Auswählen nötig. Ein
+  // "anderes Symbol"-Klick blättert innerhalb der Icon-Bibliothek weiter.
+  const guessedIndex = useMemo(() => ACTIVITY_ICONS.indexOf(guessIcon(name)), [name])
+  const icon: IconName = activity && iconOffset === 0
+    ? ((activity.icon as IconName) ?? 'sparkle')
+    : ACTIVITY_ICONS[(Math.max(guessedIndex, 0) + iconOffset + ACTIVITY_ICONS.length) % ACTIVITY_ICONS.length]
 
   const signed = category === 'orange' ? 0 : category === 'green' ? rate : -rate
 
@@ -53,21 +61,38 @@ export function ActivitySheet({
         </div>
       </div>
 
-      <label className="field">
-        <span className="lbl">Name</span>
-        <input className="input" value={name} placeholder="z. B. Chorprobe" onChange={(e) => setName(e.target.value)} />
-      </label>
-
-      <div className="field">
-        <span className="lbl">Symbol</span>
-        <div className="pick">
-          {ACTIVITY_ICONS.map((n) => (
-            <button key={n} className={icon === n ? 'active' : ''} onClick={() => setIcon(n)}>
-              <Icon name={n} size={19} />
-            </button>
-          ))}
+      <div className="field row" style={{ gap: 14, alignItems: 'flex-end' }}>
+        <label style={{ flex: 1 }}>
+          <span className="lbl">Name</span>
+          <input
+            className="input"
+            value={name}
+            placeholder="z. B. Chorprobe"
+            onChange={(e) => {
+              setName(e.target.value)
+              setIconOffset(0)
+            }}
+          />
+        </label>
+        <div style={{ textAlign: 'center' }}>
+          <span className="lbl" style={{ display: 'block', marginBottom: 7 }}>
+            Symbol
+          </span>
+          <div className={`icon-preview ${CAT_CLASS[category]}`}>
+            <Icon name={icon} size={24} />
+          </div>
         </div>
       </div>
+
+      <button
+        type="button"
+        className="btn ghost sm"
+        style={{ marginTop: 4 }}
+        onClick={() => setIconOffset((o) => o + 1)}
+      >
+        <Icon name="sparkle" size={14} />
+        Anderes Symbol
+      </button>
 
       {category !== 'orange' && (
         <div className="field">

@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 export function Sheet({
   title,
@@ -11,7 +12,7 @@ export function Sheet({
   onClose: () => void
   children: ReactNode
 }) {
-  return (
+  const node = (
     <div
       className="backdrop"
       onClick={(e) => {
@@ -28,4 +29,10 @@ export function Sheet({
       </div>
     </div>
   )
+
+  // Über ein Portal gerendert, damit verschachtelte Sheets (z. B. "Neue
+  // Aktivität" innerhalb "Neuer Termin") nicht vom scrollbaren Container
+  // des äußeren Sheets abgeschnitten werden.
+  const root = document.getElementById('sheet-root')
+  return root ? createPortal(node, root) : node
 }

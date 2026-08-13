@@ -34,8 +34,12 @@ interface Store {
   upsertActivity: (a: Omit<Activity, 'id'> & { id?: string }) => string
   removeActivity: (id: string) => void
   addEvent: (e: Omit<EnergyEvent, 'id'>) => void
+  /** Legt dieselbe Terminvorlage an mehreren Terminen (z. B. wöchentlich) auf einmal an. */
+  addEventSeries: (e: Omit<EnergyEvent, 'id' | 'seriesId' | 'date'>, dates: string[]) => void
   updateEvent: (id: string, patch: Partial<EnergyEvent>) => void
   removeEvent: (id: string) => void
+  /** Löscht alle Termine einer Serie ab (inklusive) dem angegebenen Datum. */
+  removeSeriesFrom: (seriesId: string, fromDate: string) => void
   setCheckIn: (c: Omit<CheckIn, 'id'>) => void
   addWarning: (w: Omit<WarningLog, 'id'>) => void
   reset: () => void
@@ -71,9 +75,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           events: s.events.filter((e) => e.activityId !== aid),
         })),
       addEvent: (e) => setState((s) => ({ ...s, events: [...s.events, { ...e, id: id() }] })),
+      addEventSeries: (e, dates) =>
+        setState((s) => {
+          const seriesId = id()
+          const created = dates.map((date) => ({ ...e, date, id: id(), seriesId }))
+          return { ...s, events: [...s.events, ...created] }
+        }),
       updateEvent: (eid, patch) =>
         setState((s) => ({ ...s, events: s.events.map((e) => (e.id === eid ? { ...e, ...patch } : e)) })),
       removeEvent: (eid) => setState((s) => ({ ...s, events: s.events.filter((e) => e.id !== eid) })),
+      removeSeriesFrom: (seriesId, fromDate) =>
+        setState((s) => ({
+          ...s,
+          events: s.events.filter((e) => !(e.seriesId === seriesId && e.date >= fromDate)),
+        })),
       setCheckIn: (c) =>
         setState((s) => {
           const existing = s.checkIns.find((x) => x.date === c.date && x.slot === c.slot)

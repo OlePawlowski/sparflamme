@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import { EventRow } from '../components/EventRow'
+import { DayTimeline } from '../components/DayTimeline'
 import { EventSheet } from '../components/EventSheet'
 import { Icon } from '../components/Icon'
 import {
@@ -98,24 +98,12 @@ export function Week() {
           </div>
         </div>
 
-        <p className="section-title">Termine & Agenda</p>
-        <div className="stack">
-          {events.length === 0 && (
-            <div className="card empty-state">
-              Nichts eingetragen.
-              <br />
-              Termine planen oder besondere Ereignisse nachtragen.
-            </div>
-          )}
-          {events.map((e) => (
-            <EventRow
-              key={e.id}
-              event={e}
-              now={selected === today ? nowMinutes() : undefined}
-              onClick={() => setSheet({ open: true, event: e })}
-            />
-          ))}
-        </div>
+        <p className="section-title">Stundenplan</p>
+        <DayTimeline
+          events={events}
+          now={selected === today ? nowMinutes() : undefined}
+          onClick={(e) => setSheet({ open: true, event: e })}
+        />
 
         <button className="btn block" style={{ marginTop: 10 }} onClick={() => setSheet({ open: true })}>
           <Icon name="plus" size={16} />

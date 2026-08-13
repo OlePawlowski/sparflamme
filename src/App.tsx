@@ -134,6 +134,8 @@ export default function App() {
         {tab === 'curve' && <Curve />}
         {tab === 'profile' && <Profile />}
 
+        <div id="sheet-root" />
+
         <nav className="nav">
           {TABS.map((t) => (
             <button key={t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>

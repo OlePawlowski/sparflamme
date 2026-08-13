@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import { Battery } from '../components/Battery'
+import { LevelBar } from '../components/LevelBar'
 import { Icon, type IconName } from '../components/Icon'
-import { EventRow } from '../components/EventRow'
 import { CheckInSheet } from '../components/CheckInSheet'
 import { EventSheet } from '../components/EventSheet'
-import { SignalSheet } from '../components/SignalSheet'
 import {
   SLOT_LABEL,
   buildDayCurve,
@@ -18,9 +16,9 @@ import {
   nowMinutes,
   todayKey,
 } from '../lib/energy'
-import type { EnergyEvent, Slot } from '../types'
+import type { Slot } from '../types'
 
-const SLOTS: { key: Slot; icon: IconName }[] = [
+const SLOT_ORDER: { key: Slot; icon: IconName }[] = [
   { key: 'morning', icon: 'sunrise' },
   { key: 'noon', icon: 'sun' },
   { key: 'evening', icon: 'moon' },
@@ -29,8 +27,7 @@ const SLOTS: { key: Slot; icon: IconName }[] = [
 export function Today({ minute }: { minute: number }) {
   const { state, setCheckIn } = useStore()
   const [slotSheet, setSlotSheet] = useState<Slot | null>(null)
-  const [eventSheet, setEventSheet] = useState<{ open: boolean; event?: EnergyEvent } | null>(null)
-  const [signalSheet, setSignalSheet] = useState(false)
+  const [eventSheet, setEventSheet] = useState(false)
 
   const date = todayKey()
   const now = minute || nowMinutes()
@@ -38,7 +35,6 @@ export function Today({ minute }: { minute: number }) {
   const level = levelAt(curve, now)
   const band = levelBand(level)
 
-  const events = state.events.filter((e) => e.date === date).sort((a, b) => a.start - b.start)
   const endOfDay = curve.length ? curve[curve.length - 1].level : level
   const warnHit = firstCrossing(curve, now, state.profile.warnThreshold)
   const stopHit = firstCrossing(curve, now, state.profile.stopThreshold)
@@ -50,6 +46,13 @@ export function Today({ minute }: { minute: number }) {
       : { lead: `Tagesende bei etwa ${Math.round(endOfDay)}%.`, rest: ' Der Tag sieht machbar aus.' }
 
   const greeting = now < 11 * 60 ? 'Guten Morgen' : now < 17 * 60 ? 'Hallo' : 'Guten Abend'
+
+  // Im Einzelmodus wird nur die jeweils nächste offene Tageszeit gezeigt –
+  // sobald sie erfasst ist, rückt die nächste nach. In "alle anzeigen"
+  // bleiben immer alle drei Kacheln sichtbar.
+  const showAll = state.profile.checkInDisplay === 'all'
+  const openSlot = SLOT_ORDER.find((s) => !checkInFor(state.checkIns, date, s.key))
+  const visibleSlots = showAll ? SLOT_ORDER : openSlot ? [openSlot] : []
 
   return (
     <>
@@ -67,12 +70,10 @@ export function Today({ minute }: { minute: number }) {
 
       <div className="scroll">
         <div className={`hero ${band}`}>
-          <div className="hero-top">
-            <Battery level={level} size={76} />
-            <div>
-              <div className="hero-level">{Math.round(level)}%</div>
-              <div className="hero-label">Energielevel · {levelLabel(level)}</div>
-            </div>
+          <div className="hero-level">{Math.round(level)}%</div>
+          <div className="hero-label">Energielevel · {levelLabel(level)}</div>
+          <div style={{ marginTop: 14 }}>
+            <LevelBar level={level} width="100%" height={16} />
           </div>
           <div className="hero-note">
             <Icon name={stopHit || warnHit ? 'alert' : 'chart'} size={15} />
@@ -85,52 +86,37 @@ export function Today({ minute }: { minute: number }) {
           </div>
         </div>
 
-        <p className="section-title">Wie geht es dir?</p>
-        <div className="slots">
-          {SLOTS.map((s) => {
-            const c = checkInFor(state.checkIns, date, s.key)
-            return (
-              <button key={s.key} className={`slot ${c ? 'done' : ''}`} onClick={() => setSlotSheet(s.key)}>
-                <Icon name={s.icon} size={19} />
-                <div className="name">{SLOT_LABEL[s.key]}</div>
-                <div className={`val ${c ? '' : 'empty'}`}>{c ? `${c.level}%` : 'eintragen'}</div>
-              </button>
-            )
-          })}
-        </div>
-
-        <button className="card" style={{ width: '100%', marginTop: 8, textAlign: 'left' }} onClick={() => setSignalSheet(true)}>
-          <div className="row">
-            <span style={{ color: 'var(--amber)' }}>
-              <Icon name="alert" size={19} />
-            </span>
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500 }}>Warnsignale erfassen</span>
-              <span className="muted">Reizüberflutung früh erkennen</span>
-            </span>
-            <span style={{ color: 'var(--ink-3)' }}>
-              <Icon name="chevron" size={16} />
-            </span>
-          </div>
-        </button>
-
-        <p className="section-title">Heute geplant</p>
-        <div className="stack">
-          {events.length === 0 && (
-            <div className="card empty-state">
-              Noch keine Termine für heute.
-              <br />
-              Trag ein, was ansteht.
+        {!showAll && !openSlot ? (
+          <>
+            <p className="section-title">Wie geht es dir?</p>
+            <div className="card row" style={{ color: 'var(--ink-2)' }}>
+              <Icon name="chart" size={17} />
+              <span style={{ fontSize: 13.5 }}>Für heute alles erfasst – Morgens, Mittags und Abends.</span>
             </div>
-          )}
-          {events.map((e) => (
-            <EventRow key={e.id} event={e} now={now} onClick={() => setEventSheet({ open: true, event: e })} />
-          ))}
-        </div>
+          </>
+        ) : (
+          visibleSlots.length > 0 && (
+            <>
+              <p className="section-title">Wie geht es dir?</p>
+              <div className="slots">
+                {visibleSlots.map((s) => {
+                  const c = checkInFor(state.checkIns, date, s.key)
+                  return (
+                    <button key={s.key} className={`slot ${c ? 'done' : ''}`} onClick={() => setSlotSheet(s.key)}>
+                      <Icon name={s.icon} size={19} />
+                      <div className="name">{SLOT_LABEL[s.key]}</div>
+                      <div className={`val ${c ? '' : 'empty'}`}>{c ? `${c.level}%` : 'eintragen'}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )
+        )}
 
-        <button className="btn block" style={{ marginTop: 10 }} onClick={() => setEventSheet({ open: true })}>
+        <button className="btn primary block" style={{ marginTop: showAll || visibleSlots.length ? 10 : 0 }} onClick={() => setEventSheet(true)}>
           <Icon name="plus" size={16} />
-          Termin eintragen
+          Termin oder Aktivität eintragen
         </button>
       </div>
 
@@ -146,9 +132,7 @@ export function Today({ minute }: { minute: number }) {
         />
       )}
 
-      {eventSheet?.open && <EventSheet date={date} event={eventSheet.event} onClose={() => setEventSheet(null)} />}
-
-      {signalSheet && <SignalSheet onClose={() => setSignalSheet(false)} />}
+      {eventSheet && <EventSheet date={date} onClose={() => setEventSheet(false)} />}
     </>
   )
 }

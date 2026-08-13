@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import { ActivitySheet } from '../components/ActivitySheet'
+import { SignalSheet } from '../components/SignalSheet'
 import { Icon, type IconName } from '../components/Icon'
+import { Logo } from '../components/Logo'
 import { fmtTime } from '../lib/energy'
 import type { Activity, Category } from '../types'
 
@@ -10,6 +12,12 @@ const CATS: { key: Category; label: string; hint: string }[] = [
   { key: 'orange', label: 'Neutral', hint: 'Aktivitäten ohne Wirkung' },
   { key: 'red', label: 'Zieht Energie', hint: 'Aktivitäten, die Kraft kosten' },
 ]
+
+const CAT_BORDER: Record<Category, string> = {
+  green: '#cfe0d5',
+  orange: '#ebe2d2',
+  red: '#ecdcda',
+}
 
 function toMinutes(v: string): number {
   const [h, m] = v.split(':').map(Number)
@@ -20,12 +28,17 @@ export function Profile() {
   const { state, setProfile, reset } = useStore()
   const p = state.profile
   const [sheet, setSheet] = useState<{ open: boolean; activity?: Activity } | null>(null)
+  const [signalSheet, setSignalSheet] = useState(false)
+
+  const permission = 'Notification' in window ? Notification.permission : 'unsupported'
+  const blocked = permission === 'denied'
 
   const requestNotifications = async () => {
     if (p.notificationsEnabled) {
       setProfile({ notificationsEnabled: false })
       return
     }
+    if (blocked) return
     if (!('Notification' in window)) {
       setProfile({ notificationsEnabled: true })
       return
@@ -37,9 +50,12 @@ export function Profile() {
   return (
     <>
       <div className="appbar">
-        <div>
-          <h1>Profil</h1>
-          <p className="sub">Deine Einstellungen und Aktivitäten</p>
+        <div className="row" style={{ gap: 10 }}>
+          <Logo size={30} />
+          <div>
+            <h1>Sparflamme</h1>
+            <p className="sub">Deine Einstellungen und Aktivitäten</p>
+          </div>
         </div>
       </div>
 
@@ -94,15 +110,49 @@ export function Profile() {
           </div>
         </div>
 
+        <p className="section-title">Warnsignale</p>
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => setSignalSheet(true)}>
+          <div className="row">
+            <span style={{ color: 'var(--amber)' }}>
+              <Icon name="alert" size={19} />
+            </span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500 }}>Warnsignale erfassen</span>
+              <span className="muted">Reizüberflutung früh erkennen</span>
+            </span>
+            <span style={{ color: 'var(--ink-3)' }}>
+              <Icon name="chevron" size={16} />
+            </span>
+          </div>
+        </button>
+
+        <p className="section-title">Check-in-Anzeige</p>
+        <div className="card">
+          <button className="spread" style={{ width: '100%' }} onClick={() => setProfile({ checkInDisplay: p.checkInDisplay === 'all' ? 'single' : 'all' })}>
+            <span style={{ textAlign: 'left' }}>
+              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500 }}>Alle Tageszeiten gleichzeitig zeigen</span>
+              <span className="muted">Sonst erscheint nur die nächste offene Tageszeit</span>
+            </span>
+            <span className={`switch ${p.checkInDisplay === 'all' ? 'on' : ''}`} />
+          </button>
+        </div>
+
         <p className="section-title">Benachrichtigungen</p>
         <div className="card">
-          <button className="spread" style={{ width: '100%' }} onClick={requestNotifications}>
+          <button className="spread" style={{ width: '100%', opacity: blocked ? 0.5 : 1 }} onClick={requestNotifications} disabled={blocked}>
             <span style={{ textAlign: 'left' }}>
               <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500 }}>Push-Nachrichten</span>
               <span className="muted">Warnung, wenn die Energie knapp wird</span>
             </span>
             <span className={`switch ${p.notificationsEnabled ? 'on' : ''}`} />
           </button>
+
+          {blocked && (
+            <p className="tiny" style={{ marginTop: 10, color: 'var(--red)', lineHeight: 1.5 }}>
+              Benachrichtigungen wurden im Browser blockiert. Tippe auf das Symbol vor der Adresse (z. B. Schloss-Symbol),
+              erlaube Benachrichtigungen für diese Seite und lade sie neu.
+            </p>
+          )}
 
           <div className="field">
             <span className="lbl">Warnung ab {p.warnThreshold}%</span>
@@ -138,6 +188,10 @@ export function Profile() {
               onChange={(e) => setProfile({ idleRatePer30: Number(e.target.value) })}
             />
           </div>
+          <p className="tiny" style={{ marginTop: 10, lineHeight: 1.5 }}>
+            Dieser Wert wird automatisch angewendet, solange kein Termin läuft – dein Level sinkt (oder steigt) also
+            auch ohne Eintragungen ganz von selbst.
+          </p>
         </div>
 
         {CATS.map((c) => (
@@ -146,7 +200,7 @@ export function Profile() {
               <span className={`dot ${c.key}`} style={{ display: 'inline-block', marginRight: 7 }} />
               {c.label}
             </p>
-            <div className="card">
+            <div className="card" style={{ borderColor: CAT_BORDER[c.key] }}>
               <p className="muted" style={{ marginBottom: 6 }}>{c.hint}</p>
               {state.activities
                 .filter((a) => a.category === c.key)
@@ -157,7 +211,7 @@ export function Profile() {
                     onClick={() => setSheet({ open: true, activity: a })}
                   >
                     <span className="ico">
-                      <Icon name={a.icon as IconName} size={18} />
+                      <Icon name={a.icon as IconName} size={20} />
                     </span>
                     <span style={{ flex: 1, fontSize: 14 }}>{a.name}</span>
                     <span className={`delta ${a.ratePer30 > 0 ? 'pos' : a.ratePer30 < 0 ? 'neg' : 'zero'}`}>
@@ -166,7 +220,7 @@ export function Profile() {
                     </span>
                   </button>
                 ))}
-              <button className="btn sm block" style={{ marginTop: 12 }} onClick={() => setSheet({ open: true })}>
+              <button className="btn sm block" style={{ marginTop: 12 }} onClick={() => setSheet({ open: true, activity: undefined })}>
                 <Icon name="plus" size={15} />
                 Aktivität hinzufügen
               </button>
@@ -186,6 +240,7 @@ export function Profile() {
       </div>
 
       {sheet?.open && <ActivitySheet activity={sheet.activity} onClose={() => setSheet(null)} />}
+      {signalSheet && <SignalSheet onClose={() => setSignalSheet(false)} />}
     </>
   )
 }

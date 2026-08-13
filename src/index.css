@@ -412,60 +412,103 @@ p {
   background: var(--red);
 }
 
-/* ---------- Event list ---------- */
+/* ---------- Stundenplan (Wochenplan-Tagesansicht) ---------- */
 
-.event {
+.timeline {
+  position: relative;
+  padding: 4px 0 4px 52px;
+  overflow: hidden;
+}
+
+.timeline-hour {
+  position: absolute;
+  left: 0;
+  right: 14px;
+  height: 0;
+}
+
+.timeline-hour span {
+  position: absolute;
+  left: 0;
+  top: -6px;
+  width: 40px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  text-align: right;
+  padding-right: 8px;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 48px;
+  right: 0;
+  top: 0;
+  border-top: 1px solid var(--line);
+}
+
+.timeline-now {
+  position: absolute;
+  left: 48px;
+  right: 14px;
+  height: 2px;
+  background: var(--red);
+  border-radius: 1px;
+  z-index: 2;
+}
+
+.timeline-event {
+  position: absolute;
+  left: 52px;
+  right: 14px;
   display: flex;
-  gap: 13px;
   align-items: center;
-  padding: 13px 14px;
+  gap: 9px;
+  padding: 7px 10px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r);
-  width: 100%;
-  text-align: left;
-  box-shadow: var(--shadow);
-}
-
-.event .ico {
-  width: 34px;
-  height: 34px;
   border-radius: var(--r-sm);
-  display: grid;
-  place-items: center;
-  flex: none;
-  color: var(--ink-2);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  text-align: left;
+  overflow: hidden;
+  z-index: 1;
 }
 
-.event.green .ico {
-  color: var(--green);
-  background: var(--green-tint);
-  border-color: #dce6df;
+.timeline-event.green {
+  border-left: 3px solid var(--green);
 }
-.event.orange .ico {
-  color: var(--amber);
-  background: var(--amber-tint);
-  border-color: #ebe2d2;
+.timeline-event.orange {
+  border-left: 3px solid var(--amber);
 }
-.event.red .ico {
-  color: var(--red);
-  background: var(--red-tint);
-  border-color: #ecdcda;
+.timeline-event.red {
+  border-left: 3px solid var(--red);
 }
 
-.event.now {
+.timeline-event.now {
   border-color: var(--line-strong);
 }
 
-.event .title {
-  font-weight: 500;
-  font-size: 14.5px;
+.timeline-event .ico {
+  color: var(--ink-2);
+  flex: none;
 }
 
-.event .meta {
-  font-size: 12.5px;
+.timeline-event-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-event .title {
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-event .meta {
+  font-size: 11px;
   color: var(--ink-3);
   margin-top: 1px;
 }
@@ -769,17 +812,59 @@ input[type='range']::-moz-range-thumb {
 }
 
 .act-row .ico {
-  color: var(--ink-3);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
 }
 
 .act-row.green .ico {
   color: var(--green);
+  background: var(--green-tint);
+  border-color: #dce6df;
 }
 .act-row.orange .ico {
   color: var(--amber);
+  background: var(--amber-tint);
+  border-color: #ebe2d2;
 }
 .act-row.red .ico {
   color: var(--red);
+  background: var(--red-tint);
+  border-color: #ecdcda;
+}
+
+/* ---------- Symbolvorschau (neue Aktivität) ---------- */
+
+.icon-preview {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r);
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.icon-preview.green {
+  color: var(--green);
+  background: var(--green-tint);
+  border-color: #dce6df;
+}
+.icon-preview.amber {
+  color: var(--amber);
+  background: var(--amber-tint);
+  border-color: #ebe2d2;
+}
+.icon-preview.red {
+  color: var(--red);
+  background: var(--red-tint);
+  border-color: #ecdcda;
 }
 
 .legend {
@@ -819,26 +904,4 @@ input[type='range']::-moz-range-thumb {
 
 .switch.on::after {
   transform: translateX(18px);
-}
-
-.pick {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-}
-
-.pick button {
-  aspect-ratio: 1;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  display: grid;
-  place-items: center;
-  color: var(--ink-2);
-}
-
-.pick button.active {
-  border-color: var(--ink);
-  color: var(--ink);
-  background: var(--surface-2);
 }

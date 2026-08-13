@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
-import { Battery } from './Battery'
+import { LevelBar } from './LevelBar'
 import { SLOT_LABEL, levelLabel } from '../lib/energy'
 import type { Slot } from '../types'
 
@@ -51,7 +51,7 @@ export function CheckInSheet({
                 border: `1px solid ${active ? 'var(--line-strong)' : 'transparent'}`,
               }}
             >
-              <Battery level={b.preview} size={62} muted={!!band && !active} />
+              <LevelBar level={b.preview} width={70} height={10} muted={!!band && !active} />
               <span style={{ fontSize: 13, fontWeight: active ? 600 : 400, color: active ? 'var(--ink)' : 'var(--ink-2)' }}>
                 {b.label}
               </span>

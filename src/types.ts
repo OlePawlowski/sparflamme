@@ -23,6 +23,8 @@ export interface EnergyEvent {
   note?: string
   /** Nachträglich erfasst statt geplant */
   logged?: boolean
+  /** Verknüpft wöchentlich wiederkehrende Termine derselben Serie. */
+  seriesId?: string
 }
 
 export interface CheckIn {
@@ -55,6 +57,8 @@ export interface Profile {
   warnThreshold: number
   stopThreshold: number
   notificationsEnabled: boolean
+  /** 'single' zeigt nur die aktuell offene Tageszeit beim Check-in, 'all' immer alle drei. */
+  checkInDisplay: 'single' | 'all'
 }
 
 export interface AppState {
