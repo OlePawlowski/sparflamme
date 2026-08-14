@@ -12,6 +12,52 @@ function roundUpHour(min: number) {
   return Math.ceil(min / 60) * 60
 }
 
+interface Platzierung {
+  event: EnergyEvent
+  spalte: number
+  spalten: number
+}
+
+/**
+ * Verteilt sich überschneidende Termine nebeneinander auf Spalten, damit keiner
+ * einen anderen verdeckt. Termine werden in Gruppen zusammenhängender
+ * Überschneidungen zerlegt; innerhalb einer Gruppe teilen sich alle die Breite.
+ */
+function platziere(events: EnergyEvent[]): Platzierung[] {
+  const sortiert = [...events].sort((a, b) => a.start - b.start || eventEnd(a) - eventEnd(b))
+  const ergebnis: Platzierung[] = []
+  let gruppe: EnergyEvent[] = []
+  let gruppenEnde = -1
+
+  const gruppeAbschließen = () => {
+    if (!gruppe.length) return
+    // Innerhalb der Gruppe die erste Spalte suchen, die zeitlich frei ist.
+    const spaltenEnde: number[] = []
+    const zuweisung = gruppe.map((e) => {
+      let spalte = spaltenEnde.findIndex((ende) => ende <= e.start)
+      if (spalte === -1) {
+        spalte = spaltenEnde.length
+        spaltenEnde.push(eventEnd(e))
+      } else {
+        spaltenEnde[spalte] = eventEnd(e)
+      }
+      return { event: e, spalte }
+    })
+    for (const z of zuweisung) ergebnis.push({ ...z, spalten: spaltenEnde.length })
+    gruppe = []
+    gruppenEnde = -1
+  }
+
+  for (const e of sortiert) {
+    if (gruppe.length && e.start >= gruppenEnde) gruppeAbschließen()
+    gruppe.push(e)
+    gruppenEnde = Math.max(gruppenEnde, eventEnd(e))
+  }
+  gruppeAbschließen()
+
+  return ergebnis
+}
+
 /** Terminübersicht eines Tages als Stundenplan – Zeilen je Stunde, Termine als Blöcke. */
 export function DayTimeline({
   events,
@@ -40,6 +86,7 @@ export function DayTimeline({
   const to = Math.min(24 * 60, roundUpHour(latest) + 60)
   const hours = Array.from({ length: Math.round((to - from) / 60) + 1 }, (_, i) => from + i * 60)
   const height = (to - from) * PX_PER_MIN
+  const platziert = platziere(events)
 
   return (
     <div className="timeline card" style={{ height }}>
@@ -54,17 +101,25 @@ export function DayTimeline({
         <div className="timeline-now" style={{ top: (now - from) * PX_PER_MIN }} />
       )}
 
-      {events.map((e) => {
+      {platziert.map(({ event: e, spalte, spalten }) => {
         const activity = state.activities.find((a) => a.id === e.activityId)
         const top = (e.start - from) * PX_PER_MIN
         const h = Math.max(30, e.durationMin * PX_PER_MIN)
         const delta = Math.round(eventDelta(e, state.activities))
         const running = now !== undefined && now >= e.start && now < eventEnd(e)
+        // 52px Zeitspalte links, 14px Rand rechts – der Rest wird geteilt.
+        const spur = `((100% - 66px) / ${spalten})`
+        const lücke = spalten > 1 ? 5 : 0
         return (
           <button
             key={e.id}
-            className={`timeline-event ${activity?.category ?? ''} ${running ? 'now' : ''}`}
-            style={{ top, height: h }}
+            className={`timeline-event ${activity?.category ?? ''} ${running ? 'now' : ''} ${spalten > 1 ? 'geteilt' : ''}`}
+            style={{
+              top,
+              height: h,
+              left: `calc(52px + ${spalte} * ${spur})`,
+              width: `calc(${spur} - ${lücke}px)`,
+            }}
             onClick={() => onClick(e)}
           >
             <span className="ico">

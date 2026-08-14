@@ -47,12 +47,13 @@ export function Today({ minute }: { minute: number }) {
 
   const greeting = now < 11 * 60 ? 'Guten Morgen' : now < 17 * 60 ? 'Hallo' : 'Guten Abend'
 
-  // Im Einzelmodus wird nur die jeweils nächste offene Tageszeit gezeigt –
-  // sobald sie erfasst ist, rückt die nächste nach. In "alle anzeigen"
-  // bleiben immer alle drei Kacheln sichtbar.
+  // Im Einzelmodus wird nur die jeweils nächste offene Tageszeit als große Kachel
+  // gezeigt – sobald sie erfasst ist, rückt die nächste nach. Bereits erfasste
+  // Tageszeiten bleiben als kompakte Pillen erreichbar, damit sie korrigierbar sind.
   const showAll = state.profile.checkInDisplay === 'all'
   const openSlot = SLOT_ORDER.find((s) => !checkInFor(state.checkIns, date, s.key))
   const visibleSlots = showAll ? SLOT_ORDER : openSlot ? [openSlot] : []
+  const doneSlots = showAll ? [] : SLOT_ORDER.filter((s) => checkInFor(state.checkIns, date, s.key))
 
   return (
     <>
@@ -86,35 +87,46 @@ export function Today({ minute }: { minute: number }) {
           </div>
         </div>
 
-        {!showAll && !openSlot ? (
-          <>
-            <p className="section-title">Wie geht es dir?</p>
-            <div className="card row" style={{ color: 'var(--ink-2)' }}>
-              <Icon name="chart" size={17} />
-              <span style={{ fontSize: 13.5 }}>Für heute alles erfasst – Morgens, Mittags und Abends.</span>
-            </div>
-          </>
-        ) : (
-          visibleSlots.length > 0 && (
-            <>
-              <p className="section-title">Wie geht es dir?</p>
-              <div className="slots">
-                {visibleSlots.map((s) => {
-                  const c = checkInFor(state.checkIns, date, s.key)
-                  return (
-                    <button key={s.key} className={`slot ${c ? 'done' : ''}`} onClick={() => setSlotSheet(s.key)}>
-                      <Icon name={s.icon} size={19} />
-                      <div className="name">{SLOT_LABEL[s.key]}</div>
-                      <div className={`val ${c ? '' : 'empty'}`}>{c ? `${c.level}%` : 'eintragen'}</div>
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )
+        <p className="section-title">Wie geht es dir?</p>
+
+        {visibleSlots.length > 0 && (
+          <div className="slots">
+            {visibleSlots.map((s) => {
+              const c = checkInFor(state.checkIns, date, s.key)
+              return (
+                <button key={s.key} className={`slot ${c ? 'done' : ''}`} onClick={() => setSlotSheet(s.key)}>
+                  <Icon name={s.icon} size={19} />
+                  <div className="name">{SLOT_LABEL[s.key]}</div>
+                  <div className={`val ${c ? '' : 'empty'}`}>{c ? `${c.level}%` : 'eintragen'}</div>
+                </button>
+              )
+            })}
+          </div>
         )}
 
-        <button className="btn primary block" style={{ marginTop: showAll || visibleSlots.length ? 10 : 0 }} onClick={() => setEventSheet(true)}>
+        {!showAll && !openSlot && (
+          <div className="card row" style={{ color: 'var(--ink-2)' }}>
+            <Icon name="chart" size={17} />
+            <span style={{ fontSize: 13.5 }}>Für heute alles erfasst – schöner Tag!</span>
+          </div>
+        )}
+
+        {doneSlots.length > 0 && (
+          <div className="done-slots">
+            {doneSlots.map((s) => {
+              const c = checkInFor(state.checkIns, date, s.key)!
+              return (
+                <button key={s.key} className="done-slot" onClick={() => setSlotSheet(s.key)}>
+                  <Icon name={s.icon} size={14} />
+                  {SLOT_LABEL[s.key]}
+                  <span className="val">{c.level}%</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        <button className="btn primary block" style={{ marginTop: 16 }} onClick={() => setEventSheet(true)}>
           <Icon name="plus" size={16} />
           Termin oder Aktivität eintragen
         </button>

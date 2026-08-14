@@ -21,9 +21,46 @@ const REPEAT_WEEKS = [
   { weeks: 26, label: '6 Monate' },
 ]
 
-function toMinutes(v: string): number {
+/** Minuten seit Mitternacht, oder null bei leerer/ungültiger Eingabe. */
+function toMinutes(v: string): number | null {
   const [h, m] = v.split(':').map(Number)
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null
   return h * 60 + m
+}
+
+/** Termine über Mitternacht sind erlaubt, aber nur bis zu dieser Länge – darüber
+ *  liegt fast sicher ein Vertipper vor (z. B. 14:00–13:00 ergäbe 23 Stunden). */
+const MAX_OVERNIGHT_MIN = 12 * 60
+
+interface Zeitraum {
+  duration: number | null
+  fehler: string | null
+  überMitternacht: boolean
+}
+
+function zeitraum(startMin: number | null, endMin: number | null): Zeitraum {
+  if (startMin === null || endMin === null) {
+    return { duration: null, fehler: 'Bitte Beginn und Ende ausfüllen.', überMitternacht: false }
+  }
+  if (endMin === startMin) {
+    return { duration: null, fehler: 'Ende muss nach dem Beginn liegen.', überMitternacht: false }
+  }
+  if (endMin > startMin) {
+    return { duration: endMin - startMin, fehler: null, überMitternacht: false }
+  }
+  const übernacht = endMin + 1440 - startMin
+  if (übernacht > MAX_OVERNIGHT_MIN) {
+    return { duration: null, fehler: 'Ende liegt vor dem Beginn – bitte Zeiten prüfen.', überMitternacht: false }
+  }
+  return { duration: übernacht, fehler: null, überMitternacht: true }
+}
+
+function dauerText(min: number): string {
+  const std = Math.floor(min / 60)
+  const rest = min % 60
+  if (std === 0) return `${rest} Min`
+  if (rest === 0) return `${std} Std`
+  return `${std} Std ${rest} Min`
 }
 
 export function EventSheet({ date, event, onClose }: { date: string; event?: EnergyEvent; onClose: () => void }) {
@@ -40,12 +77,12 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
 
   const activity = state.activities.find((a) => a.id === activityId)
   const startMin = toMinutes(start)
-  const rawDuration = toMinutes(end) - startMin
-  const duration = Math.max(15, rawDuration > 0 ? rawDuration : rawDuration + 1440)
-  const delta = activity ? (activity.ratePer30 * duration) / 30 : 0
+  const { duration, fehler, überMitternacht } = zeitraum(startMin, toMinutes(end))
+  const delta = activity && duration !== null ? (activity.ratePer30 * duration) / 30 : 0
+  const speicherbar = !!activity && duration !== null && startMin !== null
 
   const save = () => {
-    if (!activity) return
+    if (!speicherbar) return
     const payload = {
       start: startMin,
       durationMin: duration,
@@ -128,9 +165,17 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
           <input className="input" type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
         </label>
       </div>
-      <p className="tiny" style={{ marginTop: 6 }}>
-        Dauer: {duration < 60 ? `${duration} Min` : `${(duration / 60).toFixed(duration % 60 ? 1 : 0)} Std`}
-      </p>
+      {fehler ? (
+        <p className="field-error">
+          <Icon name="alert" size={14} />
+          {fehler}
+        </p>
+      ) : (
+        <p className="tiny" style={{ marginTop: 6 }}>
+          Dauer: {dauerText(duration!)}
+          {überMitternacht ? ' · geht bis zum nächsten Tag' : ''}
+        </p>
+      )}
 
       <label className="field">
         <span className="lbl">Titel (optional)</span>
@@ -172,7 +217,7 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
         </div>
       )}
 
-      {activity && (
+      {activity && duration !== null && startMin !== null && (
         <div className="card" style={{ marginTop: 18, background: 'var(--surface-2)' }}>
           <div className="spread">
             <span style={{ fontSize: 14 }}>Energiewirkung</span>
@@ -188,7 +233,7 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
         </div>
       )}
 
-      <button className="btn primary block" style={{ marginTop: 16 }} disabled={!activity} onClick={save}>
+      <button className="btn primary block" style={{ marginTop: 16 }} disabled={!speicherbar} onClick={save}>
         {event ? 'Änderungen speichern' : 'Termin eintragen'}
       </button>
 
