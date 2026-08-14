@@ -8,9 +8,9 @@ import { fmtTime } from '../lib/energy'
 import type { Activity, Category } from '../types'
 
 const CATS: { key: Category; label: string; hint: string }[] = [
-  { key: 'green', label: 'Lädt auf', hint: 'Aktivitäten, die Energie geben' },
-  { key: 'orange', label: 'Neutral', hint: 'Aktivitäten ohne Wirkung' },
-  { key: 'red', label: 'Zieht Energie', hint: 'Aktivitäten, die Kraft kosten' },
+  { key: 'green', label: 'Geben Energie', hint: 'Laden dein Level wieder auf' },
+  { key: 'orange', label: 'Neutral', hint: 'Verändern dein Level nicht' },
+  { key: 'red', label: 'Kosten Kraft', hint: 'Zehren an deinem Level' },
 ]
 
 const CAT_BORDER: Record<Category, string> = {

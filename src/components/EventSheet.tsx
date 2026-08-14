@@ -7,9 +7,9 @@ import { addDays, fmtTime } from '../lib/energy'
 import type { Category, EnergyEvent } from '../types'
 
 const CAT_LABEL: Record<Category, string> = {
-  green: 'Lädt auf',
+  green: 'Geben Energie',
   orange: 'Neutral',
-  red: 'Zieht Energie',
+  red: 'Kosten Kraft',
 }
 
 const CAT_CLASS: Record<Category, string> = { green: 'green', orange: 'amber', red: 'red' }
