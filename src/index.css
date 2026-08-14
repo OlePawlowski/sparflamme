@@ -454,6 +454,9 @@ p {
 
 .timeline {
   position: relative;
+  /* Eigener Stapelkontext: das z-index der Terminblöcke wirkt nur innerhalb
+     des Stundenplans und nicht gegen Navigation oder Sheets. */
+  isolation: isolate;
   padding: 4px 0 4px 52px;
   overflow: hidden;
 }
@@ -597,6 +600,7 @@ p {
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 20;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   background: rgba(255, 255, 255, 0.92);
