@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useStore } from './store'
+import { StoreProvider, useStore } from './store'
+import { useAuth } from './auth'
+import { studienModus } from './lib/supabase'
+import { Login } from './views/Login'
+import { Dashboard } from './views/Dashboard'
 import { Icon, type IconName } from './components/Icon'
 import { Today } from './views/Today'
 import { Week } from './views/Week'
@@ -32,8 +36,39 @@ interface Toast {
   body: string
 }
 
+/**
+ * Entscheidet, was überhaupt gezeigt wird: Anmeldung, Studien-Dashboard oder
+ * die App selbst. Der Store hängt an der Sitzung und wird deshalb erst
+ * innerhalb der angemeldeten Ansicht aufgespannt.
+ */
 export default function App() {
-  const { state } = useStore()
+  const { sitzung, laedt } = useAuth()
+
+  if (studienModus && laedt) {
+    return (
+      <div className="shell">
+        <div className="phone" style={{ display: 'grid', placeItems: 'center' }}>
+          <p className="muted">Einen Moment…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (studienModus && !sitzung) return <Login />
+
+  // Das Dashboard liest direkt aus der Datenbank und braucht keinen Store –
+  // sonst bekaeme das Forscherkonto selbst eine Aktivitaetenliste angelegt.
+  if (sitzung?.rolle === 'researcher') return <Dashboard />
+
+  return (
+    <StoreProvider>
+      <ProbandenApp />
+    </StoreProvider>
+  )
+}
+
+function ProbandenApp() {
+  const { state, laedt, fehler } = useStore()
   const [tab, setTab] = useState<Tab>('today')
   const [settingsOffen, setSettingsOffen] = useState(false)
   const [minute, setMinute] = useState(nowMinutes())
@@ -106,9 +141,25 @@ export default function App() {
     }
   }, [state, minute])
 
+  if (laedt) {
+    return (
+      <div className="shell">
+        <div className="phone" style={{ display: 'grid', placeItems: 'center' }}>
+          <p className="muted">Deine Daten werden geladen…</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="shell">
       <div className="phone">
+        {fehler && (
+          <div className="speicher-fehler">
+            <Icon name="alert" size={15} />
+            <span>Nicht gespeichert: {fehler}</span>
+          </div>
+        )}
         <div className="toasts">
           {toasts.map((t) => (
             <div

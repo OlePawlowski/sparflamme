@@ -48,3 +48,14 @@ zurücksetzen geht im Profil ganz unten.
 Prototyp zum Testen. Für den App Store fehlen: echtes Backend/Account, Hintergrund-Push
 (Service Worker bzw. natives Wrapping über Capacitor), Kalender-Import und ein Datenschutzkonzept.
 # sparflamme
+
+## Betrieb in der Studie
+
+Die App laeuft in zwei Betriebsarten:
+
+* **Demo-Modus** (ohne `.env`): alle Daten bleiben im Browser, keine Anmeldung.
+  Zum Ausprobieren und Vorfuehren.
+* **Studien-Modus** (mit Supabase-Zugangsdaten): Anmeldung mit pseudonymem Code,
+  Daten liegen in der EU, die Studienleitung hat ein Auswertungs-Dashboard.
+
+Die vollstaendige Einrichtung steht in [STUDIE.md](STUDIE.md).

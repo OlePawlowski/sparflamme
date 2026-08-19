@@ -1,5 +1,7 @@
 import { useStore } from '../store'
+import { useAuth } from '../auth'
 import { Icon } from '../components/Icon'
+import { studienModus } from '../lib/supabase'
 import { fmtTime } from '../lib/energy'
 
 function toMinutes(v: string): number {
@@ -10,6 +12,7 @@ function toMinutes(v: string): number {
 /** Untergeordnete Seite: alles, was man selten anfasst. Erreichbar über das Zahnrad. */
 export function Settings({ onBack }: { onBack: () => void }) {
   const { state, setProfile, reset } = useStore()
+  const { sitzung, abmelden } = useAuth()
   const p = state.profile
 
   const permission = 'Notification' in window ? Notification.permission : 'unsupported'
@@ -49,10 +52,22 @@ export function Settings({ onBack }: { onBack: () => void }) {
           Über dich
         </p>
         <div className="card">
-          <label className="field" style={{ marginTop: 0 }}>
-            <span className="lbl">Name</span>
-            <input className="input" value={p.name} placeholder="Dein Name" onChange={(e) => setProfile({ name: e.target.value })} />
-          </label>
+          {studienModus ? (
+            <div className="field" style={{ marginTop: 0 }}>
+              <span className="lbl">Studien-Code</span>
+              <div className="input mono" style={{ background: 'var(--surface-2)', color: 'var(--ink-2)' }}>
+                {sitzung?.code}
+              </div>
+              <p className="tiny" style={{ marginTop: 6 }}>
+                Dein Pseudonym. Name und E-Mail werden nicht gespeichert.
+              </p>
+            </div>
+          ) : (
+            <label className="field" style={{ marginTop: 0 }}>
+              <span className="lbl">Name</span>
+              <input className="input" value={p.name} placeholder="Dein Name" onChange={(e) => setProfile({ name: e.target.value })} />
+            </label>
+          )}
           <div className="grid2">
             <label className="field">
               <span className="lbl">Alter</span>
@@ -166,9 +181,16 @@ export function Settings({ onBack }: { onBack: () => void }) {
           </div>
         </div>
 
+        {studienModus && (
+          <button className="btn block" style={{ marginTop: 24 }} onClick={abmelden}>
+            <Icon name="user" size={16} />
+            Abmelden
+          </button>
+        )}
+
         <button
           className="btn ghost block"
-          style={{ marginTop: 24, color: 'var(--red)' }}
+          style={{ marginTop: studienModus ? 6 : 24, color: 'var(--red)' }}
           onClick={() => {
             if (confirm('Alle Daten zurücksetzen?')) {
               reset()
