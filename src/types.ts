@@ -50,10 +50,6 @@ export interface Profile {
   /** Minuten seit Mitternacht */
   sleepStart: number
   sleepEnd: number
-  /** Grundverbrauch pro 30 Minuten im wachen Alltag ohne Termin */
-  idleRatePer30: number
-  /** Erholung pro 30 Minuten Schlaf */
-  sleepRatePer30: number
   warnThreshold: number
   stopThreshold: number
   notificationsEnabled: boolean

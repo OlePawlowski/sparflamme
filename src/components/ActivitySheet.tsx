@@ -2,14 +2,9 @@ import { useMemo, useState } from 'react'
 import { Sheet } from './Sheet'
 import { useStore } from '../store'
 import { ACTIVITY_ICONS, Icon, type IconName } from './Icon'
+import { CAT_ICON, CAT_LABEL, CAT_ORDER } from '../lib/categories'
 import { guessIcon } from '../lib/iconGuess'
 import type { Activity, Category } from '../types'
-
-const CAT_LABEL: Record<Category, string> = {
-  green: 'Geben Energie',
-  orange: 'Neutral',
-  red: 'Kosten Kraft',
-}
 
 const CAT_CLASS: Record<Category, string> = { green: 'green', orange: 'amber', red: 'red' }
 
@@ -48,14 +43,15 @@ export function ActivitySheet({
     >
       <div className="field">
         <span className="lbl">Bereich</span>
-        <div className="chips">
-          {(['green', 'orange', 'red'] as Category[]).map((c) => (
+        <div className="cat-wahl">
+          {CAT_ORDER.map((c) => (
             <button
               key={c}
-              className={`chip ${CAT_CLASS[c]} ${category === c ? 'active' : ''}`}
+              className={`cat-karte ${CAT_CLASS[c]} ${category === c ? 'active' : ''}`}
               onClick={() => setCategory(c)}
             >
-              {CAT_LABEL[c]}
+              <Icon name={CAT_ICON[c]} size={28} strokeWidth={1.8} />
+              <span>{CAT_LABEL[c]}</span>
             </button>
           ))}
         </div>
@@ -79,7 +75,7 @@ export function ActivitySheet({
             Symbol
           </span>
           <div className={`icon-preview ${CAT_CLASS[category]}`}>
-            <Icon name={icon} size={24} />
+            <Icon name={icon} size={30} />
           </div>
         </div>
       </div>

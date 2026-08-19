@@ -74,19 +74,17 @@ export function eventDelta(e: EnergyEvent, activities: Activity[]): number {
   return (a.ratePer30 * e.durationMin) / 30
 }
 
-function rateAt(t: number, events: EnergyEvent[], activities: Activity[], idle: number): number {
+/** Summe der Raten aller Termine, die zum Zeitpunkt t laufen. Ohne Termin
+ *  verändert sich das Level nicht – es gibt keinen automatischen Grundverbrauch. */
+function rateAt(t: number, events: EnergyEvent[], activities: Activity[]): number {
   let sum = 0
-  let hit = false
   for (const e of events) {
     if (t >= e.start && t < eventEnd(e)) {
       const a = activities.find((x) => x.id === e.activityId)
-      if (a) {
-        sum += a.ratePer30
-        hit = true
-      }
+      if (a) sum += a.ratePer30
     }
   }
-  return hit ? sum : idle
+  return sum
 }
 
 /**
@@ -114,7 +112,7 @@ export function buildDayCurve(state: AppState, date: string, now: number | null)
   for (let t = from; t <= to; t += STEP) {
     if (anchors.has(t)) level = anchors.get(t)!
     points.push({ t, level: clamp(level), forecast: now !== null && t > now })
-    const rate = rateAt(t, events, activities, profile.idleRatePer30)
+    const rate = rateAt(t, events, activities)
     level = clamp(level + (rate * STEP) / 30)
   }
   return points

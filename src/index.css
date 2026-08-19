@@ -156,6 +156,9 @@ p {
   letter-spacing: 0.3px;
   color: var(--ink-3);
   margin: 26px 2px 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .row {
@@ -211,18 +214,24 @@ p {
   border-color: #ecdcda;
 }
 
+.hero-ring {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 2px;
+}
+
 .hero-level {
-  font-size: 42px;
+  font-size: 44px;
   font-weight: 600;
   line-height: 1;
-  letter-spacing: -1.8px;
+  letter-spacing: -2px;
   font-variant-numeric: tabular-nums;
 }
 
 .hero-label {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--ink-2);
-  margin-top: 5px;
 }
 
 .hero-note {
@@ -255,39 +264,96 @@ p {
   gap: 8px;
 }
 
+.slots.einzeln {
+  grid-template-columns: 1fr;
+}
+
 .slot {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 13px 8px 12px;
-  text-align: center;
-  color: var(--ink-3);
+  border-radius: var(--r-lg);
+  padding: 18px 10px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   box-shadow: var(--shadow);
+  transition: border-color 0.14s ease, transform 0.14s ease;
+}
+
+.slot:hover {
+  transform: translateY(-1px);
+}
+
+/* Jede Tageszeit hat ihre eigene Farbe – Morgens warm, Mittags hell, Abends kühl. */
+.slot-ico {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+
+.slot.morning .slot-ico {
+  color: #b8791f;
+  background: #fbf1e0;
+}
+.slot.noon .slot-ico {
+  color: #b8951f;
+  background: #fbf7e0;
+}
+.slot.evening .slot-ico {
+  color: #4a5f8a;
+  background: #e9edf6;
+}
+
+.slots.einzeln .slot-ico {
+  width: 78px;
+  height: 78px;
 }
 
 .slot .name {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--ink-2);
-  margin-top: 7px;
+  color: var(--ink);
+}
+
+.slots.einzeln .slot .name {
+  font-size: 17px;
+  font-weight: 600;
 }
 
 .slot .val {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--ink);
-  margin-top: 3px;
   font-variant-numeric: tabular-nums;
 }
 
 .slot .val.empty {
   color: var(--ink-3);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
 }
 
 .slot.done {
   border-color: var(--line-strong);
+}
+
+.slots.einzeln .slot .val.empty {
+  font-size: 15px;
+}
+
+/* Farbige Pillen für bereits erfasste Tageszeiten */
+.done-slot.morning {
+  color: #8a5c17;
+}
+.done-slot.noon {
+  color: #8a7017;
+}
+.done-slot.evening {
+  color: #3d4f73;
 }
 
 /* ---------- Buttons ---------- */
@@ -395,6 +461,251 @@ p {
   font-weight: 600;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Zahnrad (Einstellungen) ---------- */
+
+.zahnrad {
+  position: absolute;
+  top: 26px;
+  right: 20px;
+  z-index: 25;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: color 0.14s ease, border-color 0.14s ease;
+}
+
+.zahnrad:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+/* ---------- Kategorie-Auswahl mit Kurvensymbolen ---------- */
+
+.cat-wahl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.cat-karte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 6px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  transition: border-color 0.14s ease, background 0.14s ease, color 0.14s ease;
+}
+
+/* Auch unausgewählt behält jede Karte ihre Farbe – nur zurückgenommen. */
+.cat-karte svg {
+  opacity: 0.75;
+}
+
+.cat-karte.green svg {
+  color: var(--green);
+}
+.cat-karte.amber svg {
+  color: var(--amber);
+}
+.cat-karte.red svg {
+  color: var(--red);
+}
+
+.cat-karte.active svg {
+  opacity: 1;
+}
+
+.cat-karte.green.active {
+  color: var(--green);
+  background: var(--green-tint);
+  border-color: var(--green);
+}
+.cat-karte.amber.active {
+  color: var(--amber);
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
+.cat-karte.red.active {
+  color: var(--red);
+  background: var(--red-tint);
+  border-color: var(--red);
+}
+
+/* ---------- Aufklappbare Kategorien im Profil ---------- */
+
+.kategorie {
+  margin-top: 10px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.kategorie.green.auf {
+  border-color: #cfe0d5;
+}
+.kategorie.amber.auf {
+  border-color: #ebe2d2;
+}
+.kategorie.red.auf {
+  border-color: #ecdcda;
+}
+
+.kategorie-kopf {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.kategorie-name {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.kategorie.green .kategorie-kopf .big-ico {
+  color: var(--green);
+  background: var(--green-tint);
+  border-color: #dce6df;
+}
+.kategorie.amber .kategorie-kopf .big-ico {
+  color: var(--amber);
+  background: var(--amber-tint);
+  border-color: #ebe2d2;
+}
+.kategorie.red .kategorie-kopf .big-ico {
+  color: var(--red);
+  background: var(--red-tint);
+  border-color: #ecdcda;
+}
+
+.kategorie-zahl {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.kategorie-pfeil {
+  color: var(--ink-3);
+  display: grid;
+  place-items: center;
+  transform: rotate(90deg);
+  transition: transform 0.18s ease;
+}
+
+.kategorie-pfeil.auf {
+  transform: rotate(-90deg);
+}
+
+.kategorie-inhalt {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Große Symbolflächen ---------- */
+
+.big-ico {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r);
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.big-ico.green {
+  color: var(--green);
+  background: var(--green-tint);
+  border-color: #dce6df;
+}
+.big-ico.amber {
+  color: var(--amber);
+  background: var(--amber-tint);
+  border-color: #ebe2d2;
+}
+.big-ico.red {
+  color: var(--red);
+  background: var(--red-tint);
+  border-color: #ecdcda;
+}
+
+.big-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  color: var(--ink);
+}
+
+/* Nur der Pfeil am Zeilenende bleibt zurückgenommen. */
+.big-row > svg:last-child {
+  color: var(--ink-3);
+}
+
+/* ---------- Auswahlpunkt in Listen ---------- */
+
+.radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: none;
+  border: 1.5px solid var(--line-strong);
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.radio.an {
+  border-color: var(--ink);
+  background: var(--ink);
+  box-shadow: inset 0 0 0 3.5px #fff;
+}
+
+/* ---------- Prozentwert direkt am Termin ändern ---------- */
+
+.rate-editor {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rate-editor input[type='range'] {
+  flex: 1;
+}
+
+/* ---------- Wirkungskarte ---------- */
+
+.wirkung-karte {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
 }
 
 /* ---------- Chips ---------- */

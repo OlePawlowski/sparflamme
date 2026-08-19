@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Sheet } from './Sheet'
-import { LevelBar } from './LevelBar'
+import { LevelRing } from './LevelRing'
 import { SLOT_LABEL, levelLabel } from '../lib/energy'
 import type { Slot } from '../types'
 
@@ -44,14 +44,16 @@ export function CheckInSheet({
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 12,
-                padding: '18px 8px 14px',
+                gap: 10,
+                padding: '16px 6px 14px',
                 borderRadius: 12,
                 background: active ? 'var(--surface)' : 'transparent',
                 border: `1px solid ${active ? 'var(--line-strong)' : 'transparent'}`,
               }}
             >
-              <LevelBar level={b.preview} width={70} height={10} muted={!!band && !active} />
+              <LevelRing level={b.preview} size={72}>
+                <span style={{ fontSize: 15, fontWeight: 600 }}>{b.preview}%</span>
+              </LevelRing>
               <span style={{ fontSize: 13, fontWeight: active ? 600 : 400, color: active ? 'var(--ink)' : 'var(--ink-2)' }}>
                 {b.label}
               </span>

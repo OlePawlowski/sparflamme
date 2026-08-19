@@ -5,6 +5,7 @@ import { Today } from './views/Today'
 import { Week } from './views/Week'
 import { Curve } from './views/Curve'
 import { Profile } from './views/Profile'
+import { Settings } from './views/Settings'
 import {
   buildDayCurve,
   firstCrossing,
@@ -34,6 +35,7 @@ interface Toast {
 export default function App() {
   const { state } = useStore()
   const [tab, setTab] = useState<Tab>('today')
+  const [settingsOffen, setSettingsOffen] = useState(false)
   const [minute, setMinute] = useState(nowMinutes())
   const [toasts, setToasts] = useState<Toast[]>([])
   const fired = useRef<Set<string>>(new Set())
@@ -129,10 +131,19 @@ export default function App() {
           ))}
         </div>
 
-        {tab === 'today' && <Today minute={minute} />}
-        {tab === 'week' && <Week />}
-        {tab === 'curve' && <Curve />}
-        {tab === 'profile' && <Profile />}
+        {settingsOffen ? (
+          <Settings onBack={() => setSettingsOffen(false)} />
+        ) : (
+          <>
+            {tab === 'today' && <Today minute={minute} />}
+            {tab === 'week' && <Week />}
+            {tab === 'curve' && <Curve />}
+            {tab === 'profile' && <Profile />}
+            <button className="zahnrad" aria-label="Einstellungen" onClick={() => setSettingsOffen(true)}>
+              <Icon name="gear" size={21} />
+            </button>
+          </>
+        )}
 
         <div id="sheet-root" />
 

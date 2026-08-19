@@ -3,23 +3,15 @@ import { Sheet } from './Sheet'
 import { ActivitySheet } from './ActivitySheet'
 import { useStore } from '../store'
 import { Icon, type IconName } from './Icon'
+import { CAT_ICON, CAT_LABEL, CAT_ORDER } from '../lib/categories'
 import { addDays, fmtTime } from '../lib/energy'
 import type { Category, EnergyEvent } from '../types'
 
-const CAT_LABEL: Record<Category, string> = {
-  green: 'Geben Energie',
-  orange: 'Neutral',
-  red: 'Kosten Kraft',
-}
-
 const CAT_CLASS: Record<Category, string> = { green: 'green', orange: 'amber', red: 'red' }
 
-const REPEAT_WEEKS = [
-  { weeks: 4, label: '4 Wochen' },
-  { weeks: 8, label: '8 Wochen' },
-  { weeks: 12, label: '12 Wochen' },
-  { weeks: 26, label: '6 Monate' },
-]
+/** Eine Serie legt ein halbes Jahr im Voraus an – ohne dass die Nutzerin
+ *  eine Zahl wählen muss. */
+const SERIE_WOCHEN = 26
 
 /** Minuten seit Mitternacht, oder null bei leerer/ungültiger Eingabe. */
 function toMinutes(v: string): number | null {
@@ -64,16 +56,18 @@ function dauerText(min: number): string {
 }
 
 export function EventSheet({ date, event, onClose }: { date: string; event?: EnergyEvent; onClose: () => void }) {
-  const { state, addEvent, addEventSeries, updateEvent, removeEvent, removeSeriesFrom } = useStore()
+  const { state, addEvent, addEventSeries, updateEvent, removeEvent, removeSeriesFrom, upsertActivity } = useStore()
   const [activityId, setActivityId] = useState(event?.activityId ?? '')
-  const [cat, setCat] = useState<Category>(state.activities.find((a) => a.id === event?.activityId)?.category ?? 'red')
+  // Ohne vorausgewählte Kategorie bleibt die Liste zu, bis eine angetippt wird.
+  const [cat, setCat] = useState<Category | null>(
+    state.activities.find((a) => a.id === event?.activityId)?.category ?? null,
+  )
   const [start, setStart] = useState(fmtTime(event?.start ?? 9 * 60))
   const [end, setEnd] = useState(fmtTime((event?.start ?? 9 * 60) + (event?.durationMin ?? 60)))
   const [title, setTitle] = useState(event?.title ?? '')
   const [note, setNote] = useState(event?.note ?? '')
   const [newActivity, setNewActivity] = useState(false)
   const [repeat, setRepeat] = useState(false)
-  const [repeatWeeks, setRepeatWeeks] = useState(8)
 
   const activity = state.activities.find((a) => a.id === activityId)
   const startMin = toMinutes(start)
@@ -93,8 +87,7 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
     if (event) {
       updateEvent(event.id, payload)
     } else if (repeat) {
-      const dates = Array.from({ length: repeatWeeks }, (_, i) => addDays(date, i * 7))
-      addEventSeries(payload, dates)
+      addEventSeries(payload, Array.from({ length: SERIE_WOCHEN }, (_, i) => addDays(date, i * 7)))
     } else {
       addEvent({ ...payload, date })
     }
@@ -109,51 +102,78 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
     >
       <div className="field">
         <span className="lbl">Art der Aktivität</span>
-        <div className="chips">
-          {(['green', 'orange', 'red'] as Category[]).map((c) => (
-            <button key={c} className={`chip ${CAT_CLASS[c]} ${cat === c ? 'active' : ''}`} onClick={() => setCat(c)}>
-              {CAT_LABEL[c]}
+        <div className="cat-wahl">
+          {CAT_ORDER.map((c) => (
+            <button
+              key={c}
+              className={`cat-karte ${CAT_CLASS[c]} ${cat === c ? 'active' : ''}`}
+              onClick={() => {
+                setCat(c)
+                if (activity && activity.category !== c) setActivityId('')
+              }}
+            >
+              <Icon name={CAT_ICON[c]} size={28} strokeWidth={1.8} />
+              <span>{CAT_LABEL[c]}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="field">
-        <span className="lbl">Aktivität</span>
-        <div className="card" style={{ padding: '2px 14px', maxHeight: 260, overflowY: 'auto' }}>
-          {state.activities
-            .filter((a) => a.category === cat)
-            .map((a) => (
-              <button key={a.id} className={`act-row ${a.category}`} onClick={() => setActivityId(a.id)}>
-                <span className="ico">
-                  <Icon name={a.icon as IconName} size={20} />
-                </span>
-                <span style={{ flex: 1, fontSize: 14 }}>{a.name}</span>
-                <span className={`delta ${a.ratePer30 > 0 ? 'pos' : a.ratePer30 < 0 ? 'neg' : 'zero'}`}>
-                  {a.ratePer30 > 0 ? '+' : ''}
-                  {a.ratePer30}%
-                </span>
-                <span
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    flex: 'none',
-                    border: `1px solid ${activityId === a.id ? 'var(--ink)' : 'var(--line-strong)'}`,
-                    background: activityId === a.id ? 'var(--ink)' : 'transparent',
-                    boxShadow: activityId === a.id ? 'inset 0 0 0 3px #fff' : 'none',
-                  }}
-                />
-              </button>
-            ))}
-          <button className="act-row" onClick={() => setNewActivity(true)}>
-            <span className="ico" style={{ color: 'var(--ink-2)' }}>
-              <Icon name="plus" size={18} />
-            </span>
-            <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-2)' }}>Neue Aktivität anlegen</span>
-          </button>
+      {cat && (
+        <div className="field">
+          <span className="lbl">Aktivität</span>
+          <div className="card" style={{ padding: '2px 14px', maxHeight: 280, overflowY: 'auto' }}>
+            {state.activities
+              .filter((a) => a.category === cat)
+              .map((a) => (
+                <button key={a.id} className={`act-row ${a.category}`} onClick={() => setActivityId(a.id)}>
+                  <span className="ico">
+                    <Icon name={a.icon as IconName} size={24} />
+                  </span>
+                  <span style={{ flex: 1, fontSize: 14.5 }}>{a.name}</span>
+                  <span className={`delta ${a.ratePer30 > 0 ? 'pos' : a.ratePer30 < 0 ? 'neg' : 'zero'}`}>
+                    {a.ratePer30 > 0 ? '+' : ''}
+                    {a.ratePer30}%
+                  </span>
+                  <span className={`radio ${activityId === a.id ? 'an' : ''}`} />
+                </button>
+              ))}
+            <button className="act-row" onClick={() => setNewActivity(true)}>
+              <span className="ico" style={{ color: 'var(--ink-2)' }}>
+                <Icon name="plus" size={22} />
+              </span>
+              <span style={{ flex: 1, fontSize: 14.5, color: 'var(--ink-2)' }}>Neue Aktivität anlegen</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {activity && activity.category !== 'orange' && (
+        <div className="field">
+          <span className="lbl">
+            Wirkung von „{activity.name}“ pro 30 Minuten
+          </span>
+          <div className="rate-editor">
+            <input
+              type="range"
+              min={1}
+              max={30}
+              value={Math.abs(activity.ratePer30)}
+              onChange={(e) => {
+                const betrag = Number(e.target.value)
+                upsertActivity({ ...activity, ratePer30: activity.category === 'green' ? betrag : -betrag })
+              }}
+            />
+            <span className={`delta ${activity.ratePer30 > 0 ? 'pos' : 'neg'}`} style={{ fontSize: 17, fontWeight: 600 }}>
+              {activity.ratePer30 > 0 ? '+' : ''}
+              {activity.ratePer30}%
+            </span>
+          </div>
+          <p className="tiny" style={{ marginTop: 6 }}>
+            Gilt für alle Termine mit dieser Aktivität.
+          </p>
+        </div>
+      )}
 
       <div className="grid2">
         <label className="field">
@@ -195,45 +215,41 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
       {!event && (
         <div className="field">
           <button className="spread" style={{ width: '100%' }} onClick={() => setRepeat((r) => !r)}>
-            <span style={{ textAlign: 'left' }}>
-              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500 }}>Wiederholt sich wöchentlich</span>
-              <span className="muted">Wird automatisch für mehrere Wochen eingetragen</span>
+            <span className="row" style={{ gap: 11 }}>
+              <span className={`big-ico ${repeat ? 'green' : ''}`}>
+                <Icon name="calendar" size={22} />
+              </span>
+              <span style={{ textAlign: 'left' }}>
+                <span style={{ display: 'block', fontSize: 14.5, fontWeight: 500 }}>Wiederholt sich wöchentlich</span>
+                <span className="muted">Jede Woche am selben Tag</span>
+              </span>
             </span>
             <span className={`switch ${repeat ? 'on' : ''}`} />
           </button>
-          {repeat && (
-            <div className="chips" style={{ marginTop: 10 }}>
-              {REPEAT_WEEKS.map((r) => (
-                <button
-                  key={r.weeks}
-                  className={`chip ${repeatWeeks === r.weeks ? 'active' : ''}`}
-                  onClick={() => setRepeatWeeks(r.weeks)}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
       {activity && duration !== null && startMin !== null && (
-        <div className="card" style={{ marginTop: 18, background: 'var(--surface-2)' }}>
-          <div className="spread">
-            <span style={{ fontSize: 14 }}>Energiewirkung</span>
-            <span className={`delta ${delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'zero'}`} style={{ fontSize: 19, fontWeight: 600 }}>
-              {delta > 0 ? '+' : ''}
-              {Math.round(delta)}%
+        <div className="wirkung-karte">
+          <span className={`big-ico ${CAT_CLASS[activity.category]}`}>
+            <Icon name={CAT_ICON[activity.category]} size={24} />
+          </span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: 'block', fontSize: 13.5, color: 'var(--ink-2)' }}>Energiewirkung</span>
+            <span className="muted">
+              {fmtTime(startMin)} – {fmtTime(startMin + duration)}
+              {repeat && !event ? ' · wöchentlich' : ''}
             </span>
-          </div>
-          <p className="muted" style={{ marginTop: 3 }}>
-            {fmtTime(startMin)} – {fmtTime(startMin + duration)}
-            {repeat && !event ? ` · ${repeatWeeks}× wöchentlich` : ''}
-          </p>
+          </span>
+          <span className={`delta ${delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'zero'}`} style={{ fontSize: 22, fontWeight: 600 }}>
+            {delta > 0 ? '+' : ''}
+            {Math.round(delta)}%
+          </span>
         </div>
       )}
 
       <button className="btn primary block" style={{ marginTop: 16 }} disabled={!speicherbar} onClick={save}>
+        <Icon name="check" size={16} />
         {event ? 'Änderungen speichern' : 'Termin eintragen'}
       </button>
 
@@ -277,7 +293,7 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
 
       {newActivity && (
         <ActivitySheet
-          defaultCategory={cat}
+          defaultCategory={cat ?? 'red'}
           onSaved={(a) => {
             setCat(a.category)
             setActivityId(a.id)

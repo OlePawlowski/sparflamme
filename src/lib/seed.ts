@@ -43,8 +43,6 @@ const defaultProfile: Profile = {
   status: 'Schüler:in',
   sleepStart: 22 * 60,
   sleepEnd: 7 * 60,
-  idleRatePer30: -1,
-  sleepRatePer30: 8,
   warnThreshold: 25,
   stopThreshold: 10,
   notificationsEnabled: false,
