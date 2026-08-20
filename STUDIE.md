@@ -12,8 +12,15 @@ nur ein Mensch tun, nicht der Rechner: Supabase (Datenbank) und Vercel
 ## 1. Supabase-Projekt anlegen
 
 1. Auf <https://supabase.com> registrieren und ein neues Projekt erstellen.
-2. **Wichtig – Region:** `Central EU (Frankfurt)` wählen. Damit bleiben die
-   Daten in der EU, was für Gesundheitsdaten nach DSGVO deutlich einfacher ist.
+2. **Wichtig – Region:** eine **EU-Region** wählen, etwa `Central EU (Frankfurt)`
+   oder `West EU (Ireland)`. Entscheidend ist allein, dass der Standort in der
+   EU liegt – dann greift die DSGVO ohne Zusatzvereinbarungen, was bei
+   Gesundheitsdaten den Unterschied macht. Welches EU-Land es ist, spielt
+   rechtlich keine Rolle.
+
+   Die Region lässt sich später **nicht** ändern. Steht dort versehentlich eine
+   Region ausserhalb der EU, muss das Projekt neu angelegt werden – vor dem
+   ersten echten Datensatz.
 3. Ein starkes Datenbank-Passwort vergeben und im Passwortmanager ablegen.
 
 ### Schema einspielen
@@ -128,7 +135,7 @@ Home-Bildschirm* ab. Dann verhält sie sich wie eine installierte App.
 ## Datenschutz – was ihr noch braucht
 
 Die App ist technisch auf Datensparsamkeit ausgelegt: keine Namen, keine
-E-Mail-Adressen, keine Standortdaten, keine Tracker, Server in Frankfurt.
+E-Mail-Adressen, keine Standortdaten, keine Tracker, Server in der EU.
 
 Das ersetzt aber nicht:
 
