@@ -1,0 +1,610 @@
+<meta charset="utf-8">
+<title>Sparflamme Studieninformation</title>
+<style>
+  /* Ruhige, gruenstichige Neutraltoene – abgeleitet aus der App selbst.
+     Bewusst kontrastarm gehalten: das Blatt lesen Menschen, fuer die
+     harte Kontraste und visuelle Unruhe anstrengend sind. */
+  :root {
+    --papier: #F7F8F6;
+    --karte: #FFFFFF;
+    --tinte: #1C211E;
+    --tinte-2: #545C57;
+    --tinte-3: #7C847E;
+    --linie: #E1E5E0;
+    --gruen: #4A7C59;
+    --gruen-weich: #EDF3EE;
+    --bernstein: #A8762A;
+    --bernstein-weich: #FBF4E6;
+    --feld: #F0F2EF;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --papier: #141715;
+      --karte: #1B1F1C;
+      --tinte: #E8EBE8;
+      --tinte-2: #A3ABA5;
+      --tinte-3: #7E867F;
+      --linie: #2A2F2B;
+      --gruen: #7FB08D;
+      --gruen-weich: #1E2620;
+      --bernstein: #D9A85A;
+      --bernstein-weich: #241E12;
+      --feld: #232823;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --papier: #141715;
+    --karte: #1B1F1C;
+    --tinte: #E8EBE8;
+    --tinte-2: #A3ABA5;
+    --tinte-3: #7E867F;
+    --linie: #2A2F2B;
+    --gruen: #7FB08D;
+    --gruen-weich: #1E2620;
+    --bernstein: #D9A85A;
+    --bernstein-weich: #241E12;
+    --feld: #232823;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--papier);
+    color: var(--tinte);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .blatt {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+  }
+
+  /* ---------- Kopf ---------- */
+
+  .kopf {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--gruen);
+  }
+
+  .augenbraue {
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--gruen);
+  }
+
+  h1 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .untertitel {
+    font-size: 1.05rem;
+    color: var(--tinte-2);
+    margin: 0;
+    max-width: 34rem;
+  }
+
+  /* ---------- Abschnitte ---------- */
+
+  section {
+    margin-top: 3rem;
+  }
+
+  h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    font-size: 1.18rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0 0 0.9rem;
+    text-wrap: balance;
+  }
+
+  /* Die Nummer hilft beim Nachfragen: "zu Punkt 4 habe ich eine Frage". */
+  .nr {
+    flex: none;
+    width: 1.9rem;
+    height: 1.9rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--gruen-weich);
+    color: var(--gruen);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  p { margin: 0 0 1rem; }
+  p:last-child { margin-bottom: 0; }
+
+  section > p, section > ul, section > .karte, section > .hinweis {
+    margin-left: 2.75rem;
+  }
+
+  ul {
+    margin: 0 0 1rem;
+    padding-left: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  li::marker { color: var(--gruen); }
+
+  strong { font-weight: 600; }
+
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    background: var(--feld);
+    padding: 0.12em 0.4em;
+    border-radius: 4px;
+  }
+
+  /* ---------- Auszeichnungen ---------- */
+
+  .karte {
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .karte h3 {
+    font-size: 0.79rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tinte-3);
+    margin: 0 0 0.85rem;
+  }
+
+  .hinweis {
+    background: var(--bernstein-weich);
+    border-left: 3px solid var(--bernstein);
+    border-radius: 0 8px 8px 0;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Platzhalter, die vor dem Austeilen ausgefuellt werden muessen.
+     Absichtlich auffaellig – ein uebersehener Platzhalter auf einer
+     Einwilligung waere ein echter Fehler. */
+  .fehlt {
+    background: var(--bernstein-weich);
+    border-bottom: 2px dotted var(--bernstein);
+    color: var(--bernstein);
+    font-weight: 600;
+    padding: 0.05em 0.35em;
+    border-radius: 3px 3px 0 0;
+  }
+
+  /* ---------- Daten-Gegenueberstellung ---------- */
+
+  .gegenueber {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.9rem;
+    margin: 0 0 1rem 2.75rem;
+  }
+
+  .gegenueber .karte { margin: 0; }
+
+  .ja h3 { color: var(--gruen); }
+  .nein h3 { color: var(--tinte-3); }
+
+  .liste-schlicht {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    font-size: 0.97rem;
+  }
+
+  .liste-schlicht li {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    line-height: 1.55;
+  }
+
+  .zeichen {
+    flex: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    line-height: 1.55;
+  }
+
+  .ja .zeichen { color: var(--gruen); }
+  .nein .zeichen { color: var(--tinte-3); }
+
+  /* ---------- Unterschriftenteil ---------- */
+
+  .einwilligung {
+    margin-top: 4rem;
+    padding-top: 2.5rem;
+    border-top: 2px solid var(--gruen);
+  }
+
+  .einwilligung h2 { margin-left: 0; }
+  .einwilligung > p, .einwilligung > .haken, .einwilligung > .unterschriften { margin-left: 0; }
+
+  .haken {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin: 1.5rem 0 2rem;
+  }
+
+  .haken > div {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+  }
+
+  .kaestchen {
+    flex: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.28rem;
+    border: 1.5px solid var(--tinte-3);
+    border-radius: 3px;
+    background: var(--karte);
+  }
+
+  .unterschriften {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 2rem 1.8rem;
+    margin-top: 2.5rem;
+  }
+
+  .linie-feld {
+    border-bottom: 1px solid var(--tinte-3);
+    height: 2.4rem;
+  }
+
+  .linie-feld + span {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--tinte-2);
+    margin-top: 0.45rem;
+  }
+
+  .fuss {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--linie);
+    font-size: 0.85rem;
+    color: var(--tinte-3);
+    line-height: 1.6;
+  }
+
+  /* ---------- Druck ---------- */
+
+  @media print {
+    body { background: #fff; color: #000; font-size: 11.5pt; }
+    .blatt { padding: 0; max-width: none; }
+    .karte, .hinweis { break-inside: avoid; }
+    section { break-inside: avoid-page; }
+    .einwilligung { break-before: page; }
+    .fehlt { background: none; color: #000; }
+  }
+
+  @media (max-width: 34rem) {
+    body { font-size: 16px; }
+    .blatt { padding: 2.5rem 1.1rem 4rem; }
+    section > p, section > ul, section > .karte, section > .hinweis,
+    .gegenueber { margin-left: 0; }
+    h2 { margin-left: 0; }
+  }
+</style>
+
+<div class="blatt">
+
+  <header class="kopf">
+    <span class="augenbraue">Information für Teilnehmende</span>
+    <h1>Die Sparflamme-Studie</h1>
+    <p class="untertitel">
+      Bitte lies dieses Blatt in Ruhe durch, bevor du mitmachst. Du kannst es
+      behalten. Wenn etwas unklar ist, frag nach — das ist ausdrücklich erwünscht.
+    </p>
+  </header>
+
+  <section>
+    <h2><span class="nr">1</span> Worum es geht</h2>
+    <p>
+      Viele autistische Menschen kennen das: Der Tag sieht auf dem Papier machbar
+      aus, und trotzdem ist die Kraft am Nachmittag weg. Was genau sie gekostet
+      hat, lässt sich hinterher schwer sagen.
+    </p>
+    <p>
+      Die App <strong>Sparflamme</strong> soll dabei helfen, das sichtbar zu machen.
+      Du trägst ein, wie viel Energie du hast und was du am Tag vorhast. Die App
+      zeigt dir daraus einen Verlauf.
+    </p>
+    <p>
+      In dieser Studie wollen wir herausfinden, ob die App im Alltag wirklich
+      nützt. Dafür brauchen wir Menschen, die sie eine Zeit lang benutzen — dich.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="nr">2</span> Was du machst</h2>
+    <p>
+      Du benutzt die App über einen Zeitraum von
+      <span class="fehlt">Dauer eintragen</span>. Konkret heißt das:
+    </p>
+    <ul>
+      <li>Du trägst ein, wie viel Energie du gerade hast — morgens, mittags, abends. Das dauert je ein paar Sekunden.</li>
+      <li>Du trägst ein, was du an dem Tag vorhast, etwa Schule, Arzttermin oder Ausruhen.</li>
+      <li>Wenn du Warnsignale bei dir bemerkst, kannst du sie festhalten.</li>
+    </ul>
+    <p>
+      Mehr ist es nicht. Es gibt keine Aufgaben, keine Tests und nichts, was man
+      richtig oder falsch machen kann.
+    </p>
+    <div class="hinweis">
+      <p>
+        <strong>Wenn du einen Tag nichts einträgst, ist das kein Problem.</strong>
+        Niemand wird dich deswegen ansprechen. Gerade an schlechten Tagen ist es
+        normal, dass so etwas liegen bleibt — und genau das ist für uns eine
+        Information, kein Fehler.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="nr">3</span> Welche Daten gespeichert werden</h2>
+    <p>
+      Hier steht vollständig, was in die Datenbank geht und was nicht. Es gibt
+      nichts darüber hinaus.
+    </p>
+    <div class="gegenueber">
+      <div class="karte ja">
+        <h3>Wird gespeichert</h3>
+        <ul class="liste-schlicht">
+          <li><span class="zeichen">+</span><span>Dein Studien-Code, zum Beispiel <span class="mono">SPF-04</span></span></li>
+          <li><span class="zeichen">+</span><span>Deine Energiewerte in Prozent, mit Datum und Tageszeit</span></li>
+          <li><span class="zeichen">+</span><span>Deine Termine: Bezeichnung, Uhrzeit, Dauer</span></li>
+          <li><span class="zeichen">+</span><span>Die Aktivitäten, die du dir anlegst, und wie viel Energie du ihnen zuordnest</span></li>
+          <li><span class="zeichen">+</span><span>Warnsignale, die du festhältst</span></li>
+          <li><span class="zeichen">+</span><span>Deine Einstellungen in der App, etwa deine Schlafenszeiten</span></li>
+          <li><span class="zeichen">+</span><span>Dein Alter, wenn du es einträgst — freiwillig</span></li>
+        </ul>
+      </div>
+      <div class="karte nein">
+        <h3>Wird nicht gespeichert</h3>
+        <ul class="liste-schlicht">
+          <li><span class="zeichen">−</span><span>Dein Name</span></li>
+          <li><span class="zeichen">−</span><span>Deine E-Mail-Adresse</span></li>
+          <li><span class="zeichen">−</span><span>Deine Telefonnummer oder Adresse</span></li>
+          <li><span class="zeichen">−</span><span>Dein Standort</span></li>
+          <li><span class="zeichen">−</span><span>Deine Diagnose oder andere medizinische Angaben</span></li>
+          <li><span class="zeichen">−</span><span>Wer deine Kontakte sind</span></li>
+          <li><span class="zeichen">−</span><span>Was du sonst auf deinem Gerät machst</span></li>
+        </ul>
+      </div>
+    </div>
+    <p>
+      Die App enthält außerdem keine Werbung und keine Zähldienste, die dein
+      Verhalten an andere Firmen melden.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="nr">4</span> Warum du einen Code statt deines Namens bekommst</h2>
+    <p>
+      Du meldest dich in der App nicht mit deinem Namen an, sondern mit einem
+      Code wie <span class="mono">SPF-04</span>. In der Datenbank steht nur
+      dieser Code. Wer sich die Daten dort ansieht, kann daraus nicht ablesen,
+      wer du bist.
+    </p>
+    <p>
+      Die Liste, welcher Code zu welcher Person gehört, führt allein die
+      Studienleitung — auf Papier beziehungsweise getrennt von der App. Nur über
+      diese Liste lässt sich eine Verbindung herstellen. Fachleute nennen das
+      <strong>pseudonym</strong>: nicht völlig anonym, aber vom Namen getrennt.
+    </p>
+    <div class="hinweis">
+      <p>
+        <strong>Das Passwort wählst du selbst, und niemand sonst kennt es.</strong>
+        Das bedeutet aber auch: Wenn du es vergisst, kann es niemand
+        zurücksetzen. Wir müssten dir dann einen neuen Zugang einrichten, und
+        deine bisherigen Einträge wären nicht mehr erreichbar. Schreib es dir
+        also an einer Stelle auf, die du wiederfindest.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="nr">5</span> Wer die Daten sehen kann</h2>
+    <ul>
+      <li><strong>Du</strong> siehst deine eigenen Daten in der App.</li>
+      <li><strong>Die Studienleitung</strong> sieht die Daten aller Teilnehmenden, aber nur unter den Codes — nicht unter Namen.</li>
+      <li><strong>Andere Teilnehmende</strong> sehen deine Daten nicht. Das ist technisch abgesichert und wurde geprüft: Auch wer sich in der App auskennt, kommt nicht an fremde Einträge.</li>
+    </ul>
+    <p>
+      Die Daten werden nicht verkauft, nicht an Firmen weitergegeben und nicht
+      für Werbung verwendet.
+    </p>
+    <p>
+      Wenn Ergebnisse veröffentlicht werden, dann nur zusammengefasst — etwa
+      „bei den meisten Teilnehmenden sank die Energie nach Schultagen stärker".
+      Einzelne Personen sind darin nicht erkennbar.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="nr">6</span> Wo die Daten liegen</h2>
+    <p>
+      Die Daten liegen auf einem Server in <strong>Irland</strong>, also innerhalb
+      der Europäischen Union. Damit gilt die europäische
+      Datenschutz-Grundverordnung. Betrieben wird der Server vom Anbieter
+      Supabase, der die Daten in unserem Auftrag speichert und selbst nicht
+      damit arbeitet.
+    </p>
+    <p>
+      Die Verbindung zwischen deinem Gerät und dem Server ist verschlüsselt.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="nr">7</span> Wie lange die Daten gespeichert bleiben</h2>
+    <p>
+      Die Daten werden bis zum <span class="fehlt">Datum eintragen</span>
+      aufbewahrt und danach gelöscht. Die Liste mit der Zuordnung von Code zu
+      Person wird bereits <span class="fehlt">Zeitpunkt eintragen</span>
+      vernichtet.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="nr">8</span> Dass du jederzeit aufhören kannst</h2>
+    <p>
+      Deine Teilnahme ist freiwillig. Du kannst jederzeit aufhören, ohne einen
+      Grund zu nennen. Es entsteht dir dadurch kein Nachteil — weder in der
+      Schule oder Ausbildung noch bei Behandlungen oder Unterstützungsangeboten.
+    </p>
+    <p>
+      Wenn du aufhörst, kannst du wählen: Entweder deine bisherigen Daten werden
+      gelöscht, oder sie dürfen anonym in der Auswertung bleiben. Sag der
+      Studienleitung einfach, was dir lieber ist.
+    </p>
+    <div class="hinweis">
+      <p>
+        Sobald die Zuordnungsliste vernichtet ist (siehe Punkt 7), lassen sich
+        deine Daten nicht mehr herausfinden und darum auch nicht mehr einzeln
+        löschen. Bis dahin geht es jederzeit.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="nr">9</span> Was dir passieren kann</h2>
+    <p>
+      Die Studie bringt keine körperlichen Risiken mit sich. Es kann aber
+      vorkommen, dass dich das tägliche Eintragen belastet — etwa wenn du dabei
+      merkst, wie oft deine Energie niedrig ist, oder wenn das Erinnern selbst
+      anstrengend wird.
+    </p>
+    <p>
+      Wenn das passiert: Du musst nichts eintragen, und du darfst jederzeit
+      aufhören. Melde dich in dem Fall gern bei der Studienleitung.
+    </p>
+    <div class="hinweis">
+      <p>
+        <strong>Die App ist kein medizinisches Gerät.</strong> Sie stellt keine
+        Diagnose, gibt keine Behandlungsempfehlung und ersetzt keine ärztliche
+        oder therapeutische Hilfe. Wenn es dir schlecht geht, wende dich an
+        Menschen, die dir helfen können — nicht an die App.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="nr">10</span> Wen du fragen kannst</h2>
+    <div class="karte">
+      <h3>Studienleitung</h3>
+      <p style="margin:0">
+        <span class="fehlt">Name</span><br>
+        <span class="fehlt">Einrichtung und Anschrift</span><br>
+        <span class="fehlt">E-Mail</span> · <span class="fehlt">Telefon</span>
+      </p>
+    </div>
+    <div class="karte">
+      <h3>Datenschutzbeauftragte Stelle</h3>
+      <p style="margin:0">
+        <span class="fehlt">Name und Kontakt</span>
+      </p>
+    </div>
+    <p>
+      Du hast das Recht zu erfahren, welche Daten über dich gespeichert sind, sie
+      berichtigen oder löschen zu lassen und dich bei einer
+      Datenschutz-Aufsichtsbehörde zu beschweren.
+    </p>
+  </section>
+
+  <div class="einwilligung">
+    <h2>Einwilligung</h2>
+    <p>
+      Bitte erst unterschreiben, wenn du alle zehn Punkte gelesen hast und deine
+      Fragen beantwortet sind.
+    </p>
+
+    <div class="haken">
+      <div>
+        <span class="kaestchen"></span>
+        <span>Ich habe die Information gelesen und verstanden. Ich hatte Gelegenheit, Fragen zu stellen.</span>
+      </div>
+      <div>
+        <span class="kaestchen"></span>
+        <span>Ich bin damit einverstanden, dass meine Daten wie beschrieben unter einem Code gespeichert und ausgewertet werden.</span>
+      </div>
+      <div>
+        <span class="kaestchen"></span>
+        <span>Ich weiß, dass ich jederzeit ohne Angabe von Gründen aufhören kann und mir daraus kein Nachteil entsteht.</span>
+      </div>
+      <div>
+        <span class="kaestchen"></span>
+        <span>Ich bin einverstanden, dass zusammengefasste Ergebnisse veröffentlicht werden dürfen, solange ich darin nicht erkennbar bin.</span>
+      </div>
+    </div>
+
+    <div class="unterschriften">
+      <div>
+        <div class="linie-feld"></div>
+        <span>Ort, Datum</span>
+      </div>
+      <div>
+        <div class="linie-feld"></div>
+        <span>Unterschrift der teilnehmenden Person</span>
+      </div>
+      <div>
+        <div class="linie-feld"></div>
+        <span>Unterschrift der Erziehungsberechtigten (bei Minderjährigen)</span>
+      </div>
+      <div>
+        <div class="linie-feld"></div>
+        <span>Unterschrift der aufklärenden Person</span>
+      </div>
+    </div>
+
+    <p style="margin-top:2rem; font-size:0.9rem; color:var(--tinte-2)">
+      Du bekommst eine unterschriebene Ausfertigung für deine Unterlagen.
+      Studien-Code: <span class="fehlt">wird von der Studienleitung eingetragen</span>
+    </p>
+  </div>
+
+  <p class="fuss">
+    Alle gelb markierten Stellen müssen vor dem Austeilen ausgefüllt werden.
+    Dieses Blatt ist ein Entwurf und ersetzt keine rechtliche Prüfung: Die
+    zuständige Ethikkommission muss den Text vor Studienbeginn freigeben, und
+    bei minderjährigen Teilnehmenden ist zusätzlich die Einwilligung der
+    Erziehungsberechtigten erforderlich.
+  </p>
+
+</div>
