@@ -62,9 +62,14 @@ create trigger profil_kennzeichen_schuetzen
 -- ueber ihre Registrierungsadresse zurueckgestuft, nicht ueber den Code --
 -- den konnten sie ja frei aendern. So kann diese Zeile kein echtes Konto
 -- treffen, auch wenn das Skript spaeter erneut laeuft.
+-- Zusaetzlich am Code festgemacht: eine der Pruefadressen wurde spaeter fuer
+-- einen echten Zugang weiterverwendet, indem nur der Code geaendert wurde.
+-- Ohne die zweite Bedingung wuerde ein erneuter Lauf diesen Zugang zurueckstufen.
 update public.profiles
 set rolle = 'participant'
-where id in (
-  select id from auth.users
-  where email like 'zztest-%@probanden.invalid'
-);
+where rolle = 'researcher'
+  and code like 'ZZTEST%'
+  and id in (
+    select id from auth.users
+    where email like 'zztest-%@probanden.invalid'
+  );
