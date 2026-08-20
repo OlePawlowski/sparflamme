@@ -42,19 +42,27 @@ keine Bestätigungsmail zugestellt werden.
 
 ## 2. Zugangsdaten in die App
 
-Im Supabase-Dashboard unter **Project Settings → API** stehen zwei Werte.
+Im Supabase-Dashboard unter **Project Settings → API Keys** steht der
+**Publishable key** (beginnt mit `sb_publishable_`). Die Projekt-URL steht
+unter **Project Settings → Data API**.
+
 Lege im Projektordner eine Datei `.env` an:
 
 ```
 VITE_SUPABASE_URL=https://deinprojekt.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
+VITE_SUPABASE_ANON_KEY=sb_publishable_...
 ```
+
+Supabase hat die Schlüssel umbenannt: *Publishable* hieß früher *anon*,
+*Secret* hieß *service_role*. Unter dem Reiter „Legacy anon, service_role API
+keys" stehen noch die alten Werte – die funktionieren auch, aber nimm die
+neuen.
 
 Beide Werte sind öffentlich und landen im Browser – das ist vorgesehen. Der
 Schutz kommt aus den Datenbankregeln.
 
-> Der `service_role`-Key darf **niemals** in diese Datei oder in die App. Er
-> umgeht sämtliche Sicherheitsregeln.
+> Der **Secret key** (`sb_secret_...`) darf **niemals** in diese Datei oder in
+> die App. Er umgeht sämtliche Sicherheitsregeln.
 
 Ohne `.env` läuft die App im **Demo-Modus**: alles bleibt lokal im Browser,
 keine Anmeldung, keine Auswertung. Praktisch zum Vorführen, ungeeignet für die
@@ -94,6 +102,7 @@ steht kein Name.
 2. **Add New → Project** und das Repository `sparflamme` auswählen.
 3. Vercel erkennt Vite automatisch. Unter **Environment Variables** die beiden
    Werte aus Schritt 2 eintragen (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+   Nur den Publishable key – niemals den Secret key.
 4. **Deploy**.
 
 Danach läuft die App unter einer festen Adresse, unabhängig von euren Rechnern.
