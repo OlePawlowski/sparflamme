@@ -117,17 +117,26 @@ p {
 /* ---------- Header ---------- */
 
 .appbar {
-  padding: 26px 20px 14px;
+  /* Rechts bleibt Platz fuer das Zahnrad, das absolut darueber liegt:
+     40px Knopf + 20px Abstand zum Rand + 12px Luft. Ohne das schiebt sich
+     eine lange Begruessung unter den Knopf. */
+  padding: 26px 72px 14px 20px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
 }
 
+/* Ohne min-width schrumpft ein Flex-Kind nicht unter seine Inhaltsbreite. */
+.appbar > div {
+  min-width: 0;
+}
+
 .appbar h1 {
   font-size: 23px;
   font-weight: 600;
   letter-spacing: -0.5px;
+  overflow-wrap: break-word;
 }
 
 .appbar .sub {
