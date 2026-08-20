@@ -49,7 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: listener } = supabase!.auth.onAuthStateChange(async (_ereignis, session) => {
       const user = session?.user
       const s = user ? await profilLaden(user.id) : null
-      if (!abgebrochen) setSitzung(s)
+      if (abgebrochen) return
+      // Nur setzen, wenn sich inhaltlich etwas geaendert hat. Ein blosser
+      // Token-Wechsel soll die Oberflaeche nicht neu aufbauen.
+      setSitzung((bisher) =>
+        bisher?.userId === s?.userId && bisher?.code === s?.code && bisher?.rolle === s?.rolle
+          ? bisher
+          : s,
+      )
     })
 
     return () => {

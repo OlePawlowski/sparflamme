@@ -35,12 +35,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const zustandRef = useRef(state)
   zustandRef.current = state
 
+  // Nur die Kennung, nicht das ganze Sitzungsobjekt: Supabase erneuert den
+  // Token regelmaessig und meldet dabei eine neue Sitzung. Haenge der Store am
+  // Objekt, wuerde er sich dabei jedesmal neu aufbauen -- mitten im Eintragen.
+  const userId = studienModus ? sitzung?.userId ?? null : null
   const backend: Backend = useMemo(
-    () =>
-      studienModus && sitzung
-        ? supabaseBackend(sitzung.userId)
-        : browserBackend(() => zustandRef.current),
-    [sitzung],
+    () => (userId ? supabaseBackend(userId) : browserBackend(() => zustandRef.current)),
+    [userId],
   )
 
   // Schreibvorgänge laufen im Hintergrund; die Oberfläche reagiert sofort.

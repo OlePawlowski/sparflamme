@@ -2,6 +2,7 @@ import { useStore } from '../store'
 import { useAuth } from '../auth'
 import { Icon } from '../components/Icon'
 import { studienModus } from '../lib/supabase'
+import { PasswortAendern } from '../components/PasswortAendern'
 import { fmtTime } from '../lib/energy'
 
 function toMinutes(v: string): number {
@@ -182,10 +183,13 @@ export function Settings({ onBack }: { onBack: () => void }) {
         </div>
 
         {studienModus && (
-          <button className="btn block" style={{ marginTop: 24 }} onClick={abmelden}>
-            <Icon name="user" size={16} />
-            Abmelden
-          </button>
+          <>
+            <PasswortAendern />
+            <button className="btn block" style={{ marginTop: 6 }} onClick={abmelden}>
+              <Icon name="user" size={16} />
+              Abmelden
+            </button>
+          </>
         )}
 
         <button
