@@ -1,13 +1,17 @@
--- Rolle und Pseudonym gegen Selbstbeförderung absichern.
+-- Rolle und Pseudonym gegen Selbstbefoerderung absichern.
 --
--- Die bisherige Update-Regel auf profiles prüfte nur, dass jemand die eigene
--- Zeile bearbeitet – nicht, WELCHE Spalten. Damit konnte sich ein Proband
--- selbst rolle = 'researcher' setzen und anschließend über die Leseregeln die
--- Daten aller anderen Teilnehmenden einsehen.
+-- Die bisherige Update-Regel auf profiles prueft nur, dass jemand die eigene
+-- Zeile bearbeitet -- nicht, WELCHE Spalten. Damit konnte sich ein Proband
+-- selbst rolle = 'researcher' setzen und anschliessend ueber die Leseregeln
+-- die Daten aller anderen Teilnehmenden einsehen.
 --
--- In einer Regel lässt sich das nicht ausdrücken: RLS kennt im WITH CHECK nur
--- die neue Zeile, nicht die alte, kann also "hat sich rolle geändert?" nicht
--- prüfen. Deshalb ein Trigger, der beide Fassungen sieht.
+-- In einer Regel laesst sich das nicht ausdruecken: RLS kennt im WITH CHECK
+-- nur die neue Zeile, nicht die alte, kann also "hat sich rolle geaendert?"
+-- gar nicht pruefen. Deshalb ein Trigger, der beide Fassungen sieht.
+--
+-- Bewusst ohne Umlaute geschrieben, weil dieses Skript von Hand in den
+-- SQL-Editor eingefuegt wird und dabei die Zeichenkodierung verloren gehen
+-- kann.
 
 create or replace function public.profil_kennzeichen_schuetzen()
 returns trigger
@@ -16,8 +20,8 @@ security definer
 set search_path = public
 as $$
 begin
-  -- Nur Zugriffe von Endnutzern werden eingeschränkt. Die Studienleitung
-  -- vergibt die Forscherinnen-Rolle über das Supabase-Dashboard; dieses
+  -- Nur Zugriffe von Endnutzern werden eingeschraenkt. Die Studienleitung
+  -- vergibt die Forscherinnen-Rolle ueber das Supabase-Dashboard; dieses
   -- arbeitet als service_role bzw. postgres und wird hier nicht gebremst.
   if current_role not in ('authenticated', 'anon') then
     return new;
@@ -30,12 +34,12 @@ begin
   end if;
 
   if new.rolle is distinct from old.rolle then
-    raise exception 'Die Rolle kann nicht selbst geändert werden.'
+    raise exception 'Die Rolle kann nicht selbst geaendert werden.'
       using errcode = 'insufficient_privilege';
   end if;
 
   if new.code is distinct from old.code then
-    raise exception 'Der Studien-Code kann nicht geändert werden.'
+    raise exception 'Der Studien-Code kann nicht geaendert werden.'
       using errcode = 'insufficient_privilege';
   end if;
 
