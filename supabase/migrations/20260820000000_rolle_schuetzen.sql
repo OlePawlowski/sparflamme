@@ -1,29 +1,34 @@
 -- Rolle und Pseudonym gegen Selbstbefoerderung absichern.
 --
--- Die bisherige Update-Regel auf profiles prueft nur, dass jemand die eigene
--- Zeile bearbeitet -- nicht, WELCHE Spalten. Damit konnte sich ein Proband
--- selbst rolle = 'researcher' setzen und anschliessend ueber die Leseregeln
--- die Daten aller anderen Teilnehmenden einsehen.
+-- Die Update-Regel auf profiles prueft nur, WESSEN Zeile bearbeitet wird,
+-- nicht WELCHE Spalten. Damit konnte sich ein Proband selbst
+-- rolle = 'researcher' setzen und anschliessend ueber die Leseregeln die Daten
+-- aller anderen Teilnehmenden einsehen.
 --
 -- In einer Regel laesst sich das nicht ausdruecken: RLS kennt im WITH CHECK
 -- nur die neue Zeile, nicht die alte, kann also "hat sich rolle geaendert?"
 -- gar nicht pruefen. Deshalb ein Trigger, der beide Fassungen sieht.
 --
--- Bewusst ohne Umlaute geschrieben, weil dieses Skript von Hand in den
--- SQL-Editor eingefuegt wird und dabei die Zeichenkodierung verloren gehen
--- kann.
+-- Unterschieden wird ueber auth.uid(), also den Token der Anfrage:
+-- Endnutzer haben eine Kennung, das Dashboard und der SQL-Editor nicht.
+-- Frueher stand hier current_role -- das war falsch, weil eine
+-- SECURITY-DEFINER-Funktion den Eigentuemer meldet und nicht den Aufrufer,
+-- wodurch der Trigger wirkungslos blieb. Die Funktion laeuft deshalb jetzt
+-- auch als SECURITY INVOKER; erhoehte Rechte braucht sie nicht.
+--
+-- Bewusst ohne Umlaute, weil dieses Skript von Hand in den SQL-Editor
+-- eingefuegt wird und dabei die Zeichenkodierung verloren gehen kann.
 
 create or replace function public.profil_kennzeichen_schuetzen()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = public
 as $$
 begin
-  -- Nur Zugriffe von Endnutzern werden eingeschraenkt. Die Studienleitung
-  -- vergibt die Forscherinnen-Rolle ueber das Supabase-Dashboard; dieses
-  -- arbeitet als service_role bzw. postgres und wird hier nicht gebremst.
-  if current_role not in ('authenticated', 'anon') then
+  -- Kein Nutzertoken: Zugriff aus dem Dashboard oder dem SQL-Editor.
+  -- Dort vergibt die Studienleitung die Forscherinnen-Rolle.
+  if auth.uid() is null then
     return new;
   end if;
 
@@ -51,3 +56,15 @@ drop trigger if exists profil_kennzeichen_schuetzen on public.profiles;
 create trigger profil_kennzeichen_schuetzen
   before insert or update on public.profiles
   for each row execute function public.profil_kennzeichen_schuetzen();
+
+-- Aufraeumen: die Pruefkonten haben sich vor dieser Korrektur selbst die
+-- Forscherinnen-Rolle gesetzt und teils fremde Codes genommen. Sie werden
+-- ueber ihre Registrierungsadresse zurueckgestuft, nicht ueber den Code --
+-- den konnten sie ja frei aendern. So kann diese Zeile kein echtes Konto
+-- treffen, auch wenn das Skript spaeter erneut laeuft.
+update public.profiles
+set rolle = 'participant'
+where id in (
+  select id from auth.users
+  where email like 'zztest-%@probanden.invalid'
+);
