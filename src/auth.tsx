@@ -26,11 +26,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sitzung, setSitzung] = useState<Sitzung | null>(studienModus ? null : DEMO)
   const [laedt, setLaedt] = useState(studienModus)
 
-  // Profil (Code und Rolle) zur angemeldeten Kennung nachladen.
-  const profilLaden = async (userId: string): Promise<Sitzung | null> => {
-    const { data, error } = await supabase!.from('profiles').select('code, rolle').eq('id', userId).single()
-    if (error || !data) return null
-    return { userId, code: data.code, rolle: data.rolle as Rolle }
+  /**
+   * Profil (Code und Rolle) nachladen, mit Wiederholungen.
+   *
+   * Beim Start auf dem Handy steht die Verbindung oft noch nicht, wenn die
+   * Abfrage losgeht. Ein einzelner Fehlschlag darf deshalb nicht bedeuten,
+   * dass jemand als abgemeldet gilt.
+   */
+  const profilLaden = async (userId: string): Promise<{ code: string; rolle: Rolle } | null> => {
+    for (let versuch = 0; versuch < 3; versuch++) {
+      const { data, error } = await supabase!.from('profiles').select('code, rolle').eq('id', userId).single()
+      if (!error && data) return { code: data.code, rolle: data.rolle as Rolle }
+      if (versuch < 2) await new Promise((r) => setTimeout(r, 400 * (versuch + 1)))
+    }
+    return null
+  }
+
+  /**
+   * Aus dem angemeldeten Konto eine Sitzung bauen. Scheitert das Profil auch
+   * nach den Wiederholungen, bleibt die Person trotzdem angemeldet -- der Code
+   * steht auch in den Anmeldedaten, und 'participant' ist die Rolle mit den
+   * wenigeren Rechten. Lieber eine eingeschraenkte Ansicht als jemand, der
+   * ohne Grund sein Passwort neu eintippen soll.
+   */
+  const sitzungAus = async (user: { id: string; user_metadata?: Record<string, unknown> }): Promise<Sitzung> => {
+    const profil = await profilLaden(user.id)
+    return {
+      userId: user.id,
+      code: profil?.code ?? (user.user_metadata?.code as string) ?? '',
+      rolle: profil?.rolle ?? 'participant',
+    }
   }
 
   useEffect(() => {
@@ -39,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase!.auth.getSession().then(async ({ data }) => {
       const user = data.session?.user
-      const s = user ? await profilLaden(user.id) : null
+      const s = user ? await sitzungAus(user) : null
       if (!abgebrochen) {
         setSitzung(s)
         setLaedt(false)
@@ -48,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: listener } = supabase!.auth.onAuthStateChange(async (_ereignis, session) => {
       const user = session?.user
-      const s = user ? await profilLaden(user.id) : null
+      const s = user ? await sitzungAus(user) : null
       if (abgebrochen) return
       // Nur setzen, wenn sich inhaltlich etwas geaendert hat. Ein blosser
       // Token-Wechsel soll die Oberflaeche nicht neu aufbauen.

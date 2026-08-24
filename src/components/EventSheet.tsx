@@ -121,7 +121,7 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
 
       {cat && (
         <div className="field">
-          <span className="lbl">Aktivität</span>
+          <span className="lbl">Aktivität auswählen</span>
           <div className="card" style={{ padding: '2px 14px', maxHeight: 280, overflowY: 'auto' }}>
             {state.activities
               .filter((a) => a.category === cat)
@@ -252,6 +252,18 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
         <Icon name="check" size={16} />
         {event ? 'Änderungen speichern' : 'Termin eintragen'}
       </button>
+
+      {/* Ein gesperrter Knopf ohne Begruendung sieht aus wie ein Fehler in der
+          App. Deshalb steht hier, welcher Schritt noch fehlt. */}
+      {!speicherbar && (
+        <p className="tiny" style={{ marginTop: 8, textAlign: 'center' }}>
+          {!cat
+            ? 'Wähle oben aus, welche Art von Aktivität das ist.'
+            : !activity
+              ? 'Tippe jetzt die passende Aktivität in der Liste an.'
+              : 'Prüfe Beginn und Ende.'}
+        </p>
+      )}
 
       {event && !event.seriesId && (
         <button
