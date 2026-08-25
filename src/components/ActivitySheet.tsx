@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Sheet } from './Sheet'
 import { useStore } from '../store'
-import { ACTIVITY_ICONS, Icon, type IconName } from './Icon'
+import { Icon } from './Icon'
+import { AktivitaetsIcon } from './AktivitaetsIcon'
+import { ICON_GRUPPEN } from '../lib/aktivitaetsIcons'
 import { CAT_ICON, CAT_LABEL, CAT_ORDER } from '../lib/categories'
 import { guessIcon } from '../lib/iconGuess'
 import type { Activity, Category } from '../types'
@@ -24,14 +26,13 @@ export function ActivitySheet({
   const [name, setName] = useState(activity?.name ?? '')
   const [category, setCategory] = useState<Category>(activity?.category ?? defaultCategory ?? 'red')
   const [rate, setRate] = useState(Math.abs(activity?.ratePer30 ?? 5))
-  const [iconOffset, setIconOffset] = useState(0)
-
-  // Symbol wird aus dem Namen erraten – kein manuelles Auswählen nötig. Ein
-  // "anderes Symbol"-Klick blättert innerhalb der Icon-Bibliothek weiter.
-  const guessedIndex = useMemo(() => ACTIVITY_ICONS.indexOf(guessIcon(name)), [name])
-  const icon: IconName = activity && iconOffset === 0
-    ? ((activity.icon as IconName) ?? 'sparkle')
-    : ACTIVITY_ICONS[(Math.max(guessedIndex, 0) + iconOffset + ACTIVITY_ICONS.length) % ACTIVITY_ICONS.length]
+  // Selbst gewaehltes Symbol schlaegt den Vorschlag. Solange nichts gewaehlt
+  // ist, wird aus dem Namen geraten – das trifft oft, aber laengst nicht immer,
+  // deshalb steht die Auswahl gleich daneben offen.
+  const [gewaehlt, setGewaehlt] = useState<string | null>(activity?.icon ?? null)
+  const [auswahlOffen, setAuswahlOffen] = useState(false)
+  const geraten = useMemo(() => guessIcon(name), [name])
+  const icon = gewaehlt ?? geraten
 
   const signed = category === 'orange' ? 0 : category === 'green' ? rate : -rate
 
@@ -64,10 +65,7 @@ export function ActivitySheet({
             className="input"
             value={name}
             placeholder="z. B. Chorprobe"
-            onChange={(e) => {
-              setName(e.target.value)
-              setIconOffset(0)
-            }}
+            onChange={(e) => setName(e.target.value)}
           />
         </label>
         <div style={{ textAlign: 'center' }}>
@@ -75,7 +73,7 @@ export function ActivitySheet({
             Symbol
           </span>
           <div className={`icon-preview ${CAT_CLASS[category]}`}>
-            <Icon name={icon} size={30} />
+            <AktivitaetsIcon name={icon} size={30} />
           </div>
         </div>
       </div>
@@ -84,11 +82,38 @@ export function ActivitySheet({
         type="button"
         className="btn ghost sm"
         style={{ marginTop: 4 }}
-        onClick={() => setIconOffset((o) => o + 1)}
+        onClick={() => setAuswahlOffen((o) => !o)}
       >
         <Icon name="sparkle" size={14} />
-        Anderes Symbol
+        {auswahlOffen ? 'Auswahl schließen' : 'Symbol auswählen'}
       </button>
+
+      {auswahlOffen && (
+        <div className="icon-auswahl">
+          {ICON_GRUPPEN.map((gruppe) => (
+            <div key={gruppe.titel}>
+              <p className="icon-gruppe-titel">{gruppe.titel}</p>
+              <div className="icon-raster">
+                {gruppe.icons.map((i) => (
+                  <button
+                    key={i.name}
+                    type="button"
+                    title={i.label}
+                    aria-label={i.label}
+                    className={`icon-wahl ${icon === i.name ? 'an' : ''}`}
+                    onClick={() => {
+                      setGewaehlt(i.name)
+                      setAuswahlOffen(false)
+                    }}
+                  >
+                    <i.C size={23} strokeWidth={1.7} absoluteStrokeWidth />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {category !== 'orange' && (
         <div className="field">
@@ -115,8 +140,13 @@ export function ActivitySheet({
         style={{ marginTop: 20 }}
         disabled={!name.trim()}
         onClick={() => {
+          // Erst speichern, dann melden. Frueher stand der Aufruf in den
+          // Argumenten von onSaved?.() -- bei optionalem Aufruf wertet
+          // JavaScript die Argumente aber gar nicht aus, sodass ohne
+          // onSaved-Empfaenger nichts gespeichert wurde.
           const saved = { id: activity?.id, name: name.trim(), icon, category, ratePer30: signed }
-          onSaved?.({ ...saved, id: upsertActivity(saved) })
+          const gespeichert = { ...saved, id: upsertActivity(saved) }
+          onSaved?.(gespeichert)
           onClose()
         }}
       >

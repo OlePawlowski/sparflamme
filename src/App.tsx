@@ -200,7 +200,16 @@ function ProbandenApp() {
 
         <nav className="nav">
           {TABS.map((t) => (
-            <button key={t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>
+            <button
+              key={t.key}
+              className={tab === t.key ? 'active' : ''}
+              onClick={() => {
+                // Die Navigation fuehrt immer aus den Einstellungen heraus –
+                // sonst tippt man unten und es passiert scheinbar nichts.
+                setSettingsOffen(false)
+                setTab(t.key)
+              }}
+            >
               <Icon name={t.icon} size={20} strokeWidth={tab === t.key ? 1.9 : 1.5} />
               {t.label}
             </button>

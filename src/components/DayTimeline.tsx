@@ -58,7 +58,7 @@ function platziere(events: EnergyEvent[]): Platzierung[] {
   return ergebnis
 }
 
-/** Terminübersicht eines Tages als Stundenplan – Zeilen je Stunde, Termine als Blöcke. */
+/** Terminübersicht eines Tages als Tagesplan – Zeilen je Stunde, Termine als Blöcke. */
 export function DayTimeline({
   events,
   now,
@@ -70,20 +70,15 @@ export function DayTimeline({
 }) {
   const { state } = useStore()
 
-  if (events.length === 0) {
-    return (
-      <div className="card empty-state">
-        Nichts eingetragen.
-        <br />
-        Termine planen oder besondere Ereignisse nachtragen.
-      </div>
-    )
-  }
-
-  const earliest = Math.min(...events.map((e) => e.start))
-  const latest = Math.max(...events.map((e) => eventEnd(e)))
-  const from = Math.max(0, roundDownHour(earliest) - 60)
-  const to = Math.min(24 * 60, roundUpHour(latest) + 60)
+  // Der ganze Tag ist sichtbar, nicht nur der Ausschnitt um die Termine herum.
+  // Als Rahmen dient die Wachzeit aus dem Profil; liegt etwas davor oder
+  // danach, waechst der Plan entsprechend mit.
+  const wachVon = roundDownHour(state.profile.sleepEnd)
+  const wachBis = roundUpHour(state.profile.sleepStart)
+  const earliest = events.length ? Math.min(...events.map((e) => e.start)) : wachVon
+  const latest = events.length ? Math.max(...events.map((e) => eventEnd(e))) : wachBis
+  const from = Math.max(0, Math.min(wachVon, roundDownHour(earliest)))
+  const to = Math.min(24 * 60, Math.max(wachBis, roundUpHour(latest)))
   const hours = Array.from({ length: Math.round((to - from) / 60) + 1 }, (_, i) => from + i * 60)
   const height = (to - from) * PX_PER_MIN
   const platziert = platziere(events)

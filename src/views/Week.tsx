@@ -98,7 +98,12 @@ export function Week() {
           </div>
         </div>
 
-        <p className="section-title">Stundenplan</p>
+        <p className="section-title">Tagesplan</p>
+        {events.length === 0 && (
+          <p className="tiny" style={{ margin: '0 2px 8px' }}>
+            Noch nichts eingetragen – tippe unten auf „Eintrag hinzufügen“.
+          </p>
+        )}
         <DayTimeline
           events={events}
           now={selected === today ? nowMinutes() : undefined}

@@ -3,7 +3,8 @@ import { useStore } from '../store'
 import { ActivitySheet } from '../components/ActivitySheet'
 import { SignalSheet } from '../components/SignalSheet'
 import { CAT_ICON, CAT_LABEL } from '../lib/categories'
-import { Icon, type IconName } from '../components/Icon'
+import { Icon } from '../components/Icon'
+import { AktivitaetsIcon } from '../components/AktivitaetsIcon'
 import { Logo } from '../components/Logo'
 import type { Activity, Category } from '../types'
 
@@ -74,7 +75,7 @@ export function Profile() {
                       onClick={() => setSheet({ open: true, activity: a })}
                     >
                       <span className="ico">
-                        <Icon name={a.icon as IconName} size={24} />
+                        <AktivitaetsIcon name={a.icon} size={24} />
                       </span>
                       <span style={{ flex: 1, fontSize: 14.5 }}>{a.name}</span>
                       <span className={`delta ${a.ratePer30 > 0 ? 'pos' : a.ratePer30 < 0 ? 'neg' : 'zero'}`}>

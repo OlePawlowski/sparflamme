@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import { Icon, type IconName } from '../components/Icon'
+import { AktivitaetsIcon } from '../components/AktivitaetsIcon'
 import {
   addDays,
   buildDayCurve,
@@ -207,7 +207,7 @@ export function Curve() {
           {drains.slice(0, 6).map(({ activity, total }) => (
             <div key={activity!.id} className={`act-row ${activity!.category}`}>
               <span className="ico">
-                <Icon name={activity!.icon as IconName} size={20} />
+                <AktivitaetsIcon name={activity!.icon} size={20} />
               </span>
               <span style={{ flex: 1, fontSize: 14 }}>{activity!.name}</span>
               <span className={`delta ${total > 0 ? 'pos' : total < 0 ? 'neg' : 'zero'}`}>

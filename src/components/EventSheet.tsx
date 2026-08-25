@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Sheet } from './Sheet'
 import { ActivitySheet } from './ActivitySheet'
 import { useStore } from '../store'
-import { Icon, type IconName } from './Icon'
+import { Icon } from './Icon'
+import { AktivitaetsIcon } from './AktivitaetsIcon'
 import { CAT_ICON, CAT_LABEL, CAT_ORDER } from '../lib/categories'
 import { addDays, fmtTime } from '../lib/energy'
 import type { Category, EnergyEvent } from '../types'
@@ -128,7 +129,7 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
               .map((a) => (
                 <button key={a.id} className={`act-row ${a.category}`} onClick={() => setActivityId(a.id)}>
                   <span className="ico">
-                    <Icon name={a.icon as IconName} size={24} />
+                    <AktivitaetsIcon name={a.icon} size={24} />
                   </span>
                   <span style={{ flex: 1, fontSize: 14.5 }}>{a.name}</span>
                   <span className={`delta ${a.ratePer30 > 0 ? 'pos' : a.ratePer30 < 0 ? 'neg' : 'zero'}`}>
