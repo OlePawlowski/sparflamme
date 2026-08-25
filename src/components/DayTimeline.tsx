@@ -1,5 +1,6 @@
+import { useEffect, useRef } from 'react'
 import { useStore } from '../store'
-import { Icon, type IconName } from './Icon'
+import { AktivitaetsIcon } from './AktivitaetsIcon'
 import { eventDelta, eventEnd, fmtTime } from '../lib/energy'
 import type { EnergyEvent } from '../types'
 
@@ -83,8 +84,21 @@ export function DayTimeline({
   const height = (to - from) * PX_PER_MIN
   const platziert = platziere(events)
 
+  // Das Fenster startet dort, wo etwas los ist: bei der aktuellen Zeit, sonst
+  // beim ersten Termin. Ohne das landet man jeden Morgen ganz oben und muss
+  // sich durch leere Stunden scrollen.
+  const fenster = useRef<HTMLDivElement>(null)
+  const sprungZiel = now ?? (events.length ? earliest : wachVon)
+  useEffect(() => {
+    const el = fenster.current
+    if (!el) return
+    const y = (sprungZiel - from) * PX_PER_MIN - el.clientHeight / 3
+    el.scrollTop = Math.max(0, y)
+  }, [sprungZiel, from])
+
   return (
-    <div className="timeline card" style={{ height }}>
+    <div className="timeline-fenster card" ref={fenster}>
+      <div className="timeline" style={{ height }}>
       {hours.map((h) => (
         <div key={h} className="timeline-hour" style={{ top: (h - from) * PX_PER_MIN }}>
           <span>{fmtTime(h)}</span>
@@ -118,7 +132,7 @@ export function DayTimeline({
             onClick={() => onClick(e)}
           >
             <span className="ico">
-              <Icon name={(activity?.icon ?? 'sparkle') as IconName} size={16} />
+              <AktivitaetsIcon name={activity?.icon} size={16} />
             </span>
             <span className="timeline-event-body">
               <span className="title">{e.title || activity?.name || 'Termin'}</span>
@@ -133,6 +147,7 @@ export function DayTimeline({
           </button>
         )
       })}
+      </div>
     </div>
   )
 }

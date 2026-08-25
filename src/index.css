@@ -782,13 +782,23 @@ p {
 
 /* ---------- Tagesplan (Wochenplan-Tagesansicht) ---------- */
 
+/* Der Tagesplan umfasst den ganzen Tag und waere als Ganzes ueber tausend
+   Pixel hoch. Er scrollt deshalb in sich, und die Seite bleibt kurz. */
+.timeline-fenster {
+  max-height: 56vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Die Luft gehoert hierher, nicht an .timeline: absolut positionierte
+     Kinder richten sich an dessen Polsterkante aus und wuerden von einem
+     padding dort gar nicht verschoben – die erste Uhrzeit bliebe angeschnitten. */
+  padding: 12px 0 16px;
+}
+
 .timeline {
   position: relative;
   /* Eigener Stapelkontext: das z-index der Terminblöcke wirkt nur innerhalb
      des Tagesplans und nicht gegen Navigation oder Sheets. */
   isolation: isolate;
-  padding: 4px 0 4px 52px;
-  overflow: hidden;
 }
 
 .timeline-hour {
