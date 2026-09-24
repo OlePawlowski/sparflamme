@@ -128,7 +128,15 @@ function uebersetze(meldung: string): string {
   if (m.includes('already registered')) return 'Diesen Code gibt es schon. Bitte anmelden statt registrieren.'
   if (m.includes('password should be')) return 'Das Passwort muss mindestens 6 Zeichen haben.'
   if (m.includes('rate limit') || m.includes('too many')) return 'Zu viele Versuche. Bitte kurz warten.'
-  if (m.includes('failed to fetch')) return 'Keine Verbindung zum Server. Ist Internet da?'
+  if (m.includes('failed to fetch') || m.includes('networkerror') || m.includes('network request')) {
+    // Frueher stand hier pauschal "Ist Internet da?". Das schiebt die Ursache
+    // der Person zu, obwohl meist der Server nicht erreichbar ist -- etwa weil
+    // das Projekt pausiert wurde. navigator.onLine meldet zuverlaessig, wenn
+    // das Geraet wirklich offline ist; andernfalls liegt es nicht am Nutzer.
+    return navigator.onLine
+      ? 'Der Server ist gerade nicht erreichbar. Das liegt nicht an dir und nicht an deinem Passwort – bitte gib der Studienleitung Bescheid.'
+      : 'Dein Gerät ist gerade offline. Sobald du wieder Empfang oder WLAN hast, funktioniert die Anmeldung.'
+  }
   return meldung
 }
 

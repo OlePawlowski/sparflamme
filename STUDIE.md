@@ -148,3 +148,28 @@ Das ersetzt aber nicht:
   in Supabase zu löschen entfernt alle zugehörigen Daten mit.
 
 Das ist Sache der Studienleitung, nicht der App.
+
+---
+
+## Wenn sich plötzlich niemand mehr anmelden kann
+
+Kostenlose Supabase-Projekte werden nach etwa **sieben Tagen ohne Zugriff
+automatisch pausiert**. Dann ist die Datenbank nicht erreichbar, und die App
+zeigt allen Teilnehmenden „Der Server ist gerade nicht erreichbar". Am
+Passwort liegt es dann nicht.
+
+**Reaktivieren:** im Supabase-Dashboard das Projekt öffnen und auf *Restore*
+klicken. Die Daten bleiben erhalten, es dauert wenige Minuten.
+
+**Damit es gar nicht erst passiert:** Im Repository liegt der Ablauf
+`.github/workflows/supabase-wachhalten.yml`, der die Datenbank täglich
+anstupst. Er braucht einmalig ein Repository-Secret namens
+`SUPABASE_PUBLISHABLE_KEY` (Settings → Secrets and variables → Actions).
+
+Während der Erhebung, wenn täglich Daten eingetragen werden, pausiert ohnehin
+nichts. Kritisch sind die Lücken davor und danach.
+
+Wer das nicht dem Zufall überlassen will, wechselt für den Studienzeitraum auf
+den Pro-Tarif — bezahlte Projekte werden nicht pausiert. Bei einer
+Tagebuchstudie sind ausgefallene Tage nicht nachholbar, das ist das eigentliche
+Argument.

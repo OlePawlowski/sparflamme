@@ -1,0 +1,50 @@
+# Haelt das Supabase-Projekt wach.
+#
+# Kostenlose Projekte werden nach etwa sieben Tagen ohne Zugriff pausiert.
+# Dann kommt niemand mehr in die App, und waehrend der Studie waeren das
+# Tagebuchdaten, die sich nicht nachtragen lassen. Ein taeglicher Aufruf
+# genuegt als Lebenszeichen.
+#
+# Einmalige Einrichtung: unter Settings -> Secrets and variables -> Actions
+# ein Repository-Secret SUPABASE_PUBLISHABLE_KEY mit dem Publishable Key
+# anlegen (der aus dem Supabase-Dashboard unter Project Settings -> API Keys).
+
+name: Supabase wachhalten
+
+on:
+  schedule:
+    # Taeglich um 06:17 UTC. Krumme Minute, weil zur vollen Stunde bei GitHub
+    # die meisten Jobs starten und geplante Laeufe sich dann verzoegern.
+    - cron: '17 6 * * *'
+  # Zum Ausprobieren von Hand ausloesbar.
+  workflow_dispatch:
+
+jobs:
+  anstupsen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Datenbank abfragen
+        env:
+          SUPABASE_URL: https://admghqsjdkxwovuckazv.supabase.co
+          KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::Secret SUPABASE_PUBLISHABLE_KEY fehlt – siehe Kommentar oben in dieser Datei."
+            exit 1
+          fi
+
+          # Eine echte Abfrage, kein blosser Ping: die Antwort ist wegen der
+          # Zugriffsregeln leer, aber die Datenbank hat gearbeitet.
+          code=$(curl -s -o antwort.txt -w '%{http_code}' --max-time 30 \
+            "$SUPABASE_URL/rest/v1/profiles?select=code&limit=1" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+
+          echo "Antwort: HTTP $code"
+          head -c 300 antwort.txt || true
+          echo
+
+          if [ "$code" != "200" ]; then
+            echo "::error::Projekt antwortet nicht (HTTP $code). Vermutlich pausiert – im Supabase-Dashboard reaktivieren."
+            exit 1
+          fi
+          echo "Projekt ist wach."
