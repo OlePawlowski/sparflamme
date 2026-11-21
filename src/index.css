@@ -13,9 +13,14 @@
   --red: #a8443a;
   --red-tint: #f6eceb;
 
-  --bg: #f7f6f4;
+  /* Etwas mehr Farbe als das fruehere Fast-Weiss, aber bewusst gedaempft:
+     die App lesen Menschen, fuer die visuelle Unruhe anstrengend ist. Der
+     Grundton nimmt das Gruen der Marke leicht auf, die Karten bleiben weiss
+     und heben sich dadurch deutlicher ab. */
+  --bg: #eef1ea;
+  --bg-aussen: #e3e7df;
   --surface: #ffffff;
-  --surface-2: #faf9f7;
+  --surface-2: #f7f8f4;
   --line: #e5e2dd;
   --line-strong: #d4d0c9;
   --ink: #1e1c1a;
@@ -49,7 +54,9 @@ body {
   font-size: 15px;
   line-height: 1.45;
   color: var(--ink);
-  background: #eceae6;
+  /* Flaeche ausserhalb des Telefonrahmens am Rechner; eine Spur dunkler als
+     der App-Hintergrund, damit sich das Fenster abhebt. */
+  background: var(--bg-aussen);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'tnum' 1, 'cv05' 1;
 }
@@ -855,14 +862,20 @@ p {
   z-index: 1;
 }
 
+/* Flaeche leicht einfaerben, nicht nur die Kante: so ist auf einen Blick zu
+   sehen, welche Termine Kraft kosten und welche welche geben. Die Toene sind
+   die ohnehin vorhandenen Hauchtoene, damit die Schrift lesbar bleibt. */
 .timeline-event.green {
   border-left: 3px solid var(--green);
+  background: var(--green-tint);
 }
 .timeline-event.orange {
   border-left: 3px solid var(--amber);
+  background: var(--amber-tint);
 }
 .timeline-event.red {
   border-left: 3px solid var(--red);
+  background: var(--red-tint);
 }
 
 .timeline-event.now {

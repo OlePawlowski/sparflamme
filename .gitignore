@@ -26,3 +26,6 @@ dist-ssr
 # Lokale Zugangsdaten
 .env
 .env.local
+.env.pausiert-vorlage
+# Kundendokumente gehoeren nicht ins Repository
+Änderungswünsche*.docx
