@@ -5,7 +5,7 @@ import { useStore } from '../store'
 import { Icon } from './Icon'
 import { AktivitaetsIcon } from './AktivitaetsIcon'
 import { CAT_ICON, CAT_LABEL, CAT_ORDER } from '../lib/categories'
-import { addDays, fmtTime } from '../lib/energy'
+import { addDays, dateFromKey, fmtTime } from '../lib/energy'
 import type { Category, EnergyEvent } from '../types'
 
 const CAT_CLASS: Record<Category, string> = { green: 'green', orange: 'amber', red: 'red' }
@@ -13,6 +13,28 @@ const CAT_CLASS: Record<Category, string> = { green: 'green', orange: 'amber', r
 /** Eine Serie legt ein halbes Jahr im Voraus an – ohne dass die Nutzerin
  *  eine Zahl wählen muss. */
 const SERIE_WOCHEN = 26
+
+const WOCHENTAGE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+
+/**
+ * Alle Termine einer Serie: für jede der kommenden Wochen jeder gewählte
+ * Wochentag. Tage vor dem Starttermin fallen weg, damit eine am Mittwoch
+ * angelegte Serie nicht rückwirkend am Montag beginnt.
+ */
+function serienTage(start: string, tage: number[]): string[] {
+  if (!tage.length) return [start]
+  // Montag der Startwoche als Anker – von dort ist jeder Wochentag ein Offset.
+  const startIndex = (dateFromKey(start).getDay() + 6) % 7
+  const montag = addDays(start, -startIndex)
+  const ergebnis: string[] = []
+  for (let woche = 0; woche < SERIE_WOCHEN; woche++) {
+    for (const tag of [...tage].sort((a, b) => a - b)) {
+      const d = addDays(montag, woche * 7 + tag)
+      if (d >= start) ergebnis.push(d)
+    }
+  }
+  return ergebnis
+}
 
 /** Minuten seit Mitternacht, oder null bei leerer/ungültiger Eingabe. */
 function toMinutes(v: string): number | null {
@@ -70,7 +92,32 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
   const [newActivity, setNewActivity] = useState(false)
   const [repeat, setRepeat] = useState(false)
 
+  /** Die Aktivitätenliste öffnet sich als eigene Ansicht über dem Formular. */
+  const [listeFuer, setListeFuer] = useState<Category | null>(null)
+
+  /**
+   * Wochentage der Wiederholung, 0 = Montag. Vorbelegt ist der Tag des
+   * Termins; wer weitere antippt, bekommt die Serie an allen gewählten Tagen.
+   */
+  const [wochentage, setWochentage] = useState<number[]>([(dateFromKey(date).getDay() + 6) % 7])
+
+  /**
+   * Wurde der Titel automatisch gesetzt? Dann darf ein Aktivitätswechsel ihn
+   * überschreiben – selbst Getipptes bleibt dagegen stehen.
+   */
+  const [titelAutomatisch, setTitelAutomatisch] = useState(!event?.title)
+
   const activity = state.activities.find((a) => a.id === activityId)
+
+  /** Auswahl übernehmen und die Liste schließen. */
+  const aktivitaetWaehlen = (id: string) => {
+    setActivityId(id)
+    const gewaehlt = state.activities.find((a) => a.id === id)
+    // Die Studienleitung wollte den gewählten Namen gleich im Titel sehen,
+    // statt ihn nur blass als Platzhalter angedeutet zu bekommen.
+    if (gewaehlt && titelAutomatisch) setTitle(gewaehlt.name)
+    setListeFuer(null)
+  }
   const startMin = toMinutes(start)
   const { duration, fehler, überMitternacht } = zeitraum(startMin, toMinutes(end))
   const delta = activity && duration !== null ? (activity.ratePer30 * duration) / 30 : 0
@@ -88,7 +135,7 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
     if (event) {
       updateEvent(event.id, payload)
     } else if (repeat) {
-      addEventSeries(payload, Array.from({ length: SERIE_WOCHEN }, (_, i) => addDays(date, i * 7)))
+      addEventSeries(payload, serienTage(date, wochentage))
     } else {
       addEvent({ ...payload, date })
     }
@@ -101,33 +148,41 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
       subtitle="Was steht an – und was macht es mit deiner Energie?"
       onClose={onClose}
     >
-      <div className="field">
-        <span className="lbl">Art der Aktivität</span>
-        <div className="cat-wahl">
-          {CAT_ORDER.map((c) => (
-            <button
-              key={c}
-              className={`cat-karte ${CAT_CLASS[c]} ${cat === c ? 'active' : ''}`}
-              onClick={() => {
-                setCat(c)
-                if (activity && activity.category !== c) setActivityId('')
-              }}
-            >
-              <Icon name={CAT_ICON[c]} size={28} strokeWidth={1.8} />
-              <span>{CAT_LABEL[c]}</span>
+      {/* Eigene Ansicht statt langer Liste im Formular: die Studienleitung
+          wollte beim Antippen einer Art nur noch deren Aktivitäten sehen. */}
+      {listeFuer && (
+        <div className="unteransicht">
+          <div className="unteransicht-kopf">
+            <button className="btn icon" aria-label="Zurück" onClick={() => setListeFuer(null)}>
+              <Icon name="arrowLeft" size={18} />
             </button>
-          ))}
-        </div>
-      </div>
+            <div>
+              <p className="unteransicht-titel">{CAT_LABEL[listeFuer]}</p>
+              <p className="muted">Wähle eine Aktivität oder lege eine neue an</p>
+            </div>
+          </div>
 
-      {cat && (
-        <div className="field">
-          <span className="lbl">Aktivität auswählen</span>
-          <div className="card" style={{ padding: '2px 14px', maxHeight: 280, overflowY: 'auto' }}>
+          {/* Oben, damit man dafür nicht erst durch die ganze Liste scrollen muss. */}
+          <button
+            className="btn primary block"
+            onClick={() => {
+              setCat(listeFuer)
+              setNewActivity(true)
+            }}
+          >
+            <Icon name="plus" size={16} />
+            Neue Aktivität anlegen
+          </button>
+
+          <div className="unteransicht-liste">
             {state.activities
-              .filter((a) => a.category === cat)
+              .filter((a) => a.category === listeFuer)
               .map((a) => (
-                <button key={a.id} className={`act-row ${a.category}`} onClick={() => setActivityId(a.id)}>
+                <button
+                  key={a.id}
+                  className={`act-row ${a.category}`}
+                  onClick={() => aktivitaetWaehlen(a.id)}
+                >
                   <span className="ico">
                     <AktivitaetsIcon name={a.icon} size={24} />
                   </span>
@@ -139,13 +194,59 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
                   <span className={`radio ${activityId === a.id ? 'an' : ''}`} />
                 </button>
               ))}
-            <button className="act-row" onClick={() => setNewActivity(true)}>
-              <span className="ico" style={{ color: 'var(--ink-2)' }}>
-                <Icon name="plus" size={22} />
-              </span>
-              <span style={{ flex: 1, fontSize: 14.5, color: 'var(--ink-2)' }}>Neue Aktivität anlegen</span>
-            </button>
+            {state.activities.filter((a) => a.category === listeFuer).length === 0 && (
+              <div className="empty-state">Hier ist noch nichts eingetragen.</div>
+            )}
           </div>
+        </div>
+      )}
+
+      <div className="field">
+        <span className="lbl">Art der Aktivität</span>
+        <div className="cat-wahl">
+          {CAT_ORDER.map((c) => (
+            <button
+              key={c}
+              className={`cat-karte ${CAT_CLASS[c]} ${cat === c ? 'active' : ''}`}
+              onClick={() => {
+                setCat(c)
+                // Wechselt die Art, passt die bisherige Auswahl nicht mehr.
+                if (activity && activity.category !== c) setActivityId('')
+                setListeFuer(c)
+              }}
+            >
+              <Icon name={CAT_ICON[c]} size={28} strokeWidth={1.8} />
+              <span>{CAT_LABEL[c]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {cat && (
+        <div className="field">
+          <span className="lbl">Aktivität</span>
+          <button className={`gewaehlte-aktivitaet ${cat}`} onClick={() => setListeFuer(cat)}>
+            {activity ? (
+              <>
+                <span className="ico">
+                  <AktivitaetsIcon name={activity.icon} size={24} />
+                </span>
+                <span className="gewaehlt-name">{activity.name}</span>
+                <span className={`delta ${activity.ratePer30 > 0 ? 'pos' : activity.ratePer30 < 0 ? 'neg' : 'zero'}`}>
+                  {activity.ratePer30 > 0 ? '+' : ''}
+                  {activity.ratePer30}%
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="ico">
+                  <Icon name="plus" size={22} />
+                </span>
+                <span className="gewaehlt-name muted">Aktivität auswählen</span>
+              </>
+            )}
+            <Icon name="chevron" size={17} />
+          </button>
         </div>
       )}
 
@@ -178,11 +279,21 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
 
       <div className="grid2">
         <label className="field">
-          <span className="lbl">Beginn</span>
+          <span className="lbl">
+            <span className="lbl-ico">
+              <Icon name="sunrise" size={15} />
+            </span>
+            Beginn
+          </span>
           <input className="input" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
         </label>
         <label className="field">
-          <span className="lbl">Ende</span>
+          <span className="lbl">
+            <span className="lbl-ico">
+              <Icon name="moon" size={15} />
+            </span>
+            Ende
+          </span>
           <input className="input" type="time" value={end} onChange={(e) => setEnd(e.target.value)} />
         </label>
       </div>
@@ -199,12 +310,17 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
       )}
 
       <label className="field">
-        <span className="lbl">Titel (optional)</span>
+        <span className="lbl">Titel</span>
         <input
-          className="input"
+          className="input titel-feld"
           value={title}
           placeholder={activity?.name ?? 'z. B. Mathe-Klausur'}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value)
+            // Ab jetzt ist der Titel von Hand gesetzt und bleibt bei einem
+            // Aktivitätswechsel stehen.
+            setTitelAutomatisch(false)
+          }}
         />
       </label>
 
@@ -227,6 +343,32 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
             </span>
             <span className={`switch ${repeat ? 'on' : ''}`} />
           </button>
+
+          {repeat && (
+            <div className="card" style={{ marginTop: 8 }}>
+              <span className="lbl">An welchen Tagen?</span>
+              <div className="wochentage">
+                {WOCHENTAGE.map((kuerzel, i) => (
+                  <button
+                    key={kuerzel}
+                    type="button"
+                    className={`wochentag ${wochentage.includes(i) ? 'an' : ''}`}
+                    aria-pressed={wochentage.includes(i)}
+                    onClick={() =>
+                      setWochentage((w) => (w.includes(i) ? w.filter((x) => x !== i) : [...w, i]))
+                    }
+                  >
+                    {kuerzel}
+                  </button>
+                ))}
+              </div>
+              <p className="tiny" style={{ marginTop: 8 }}>
+                {wochentage.length === 0
+                  ? 'Ohne Tag wird der Termin nur einmal eingetragen.'
+                  : `${serienTage(date, wochentage).length} Termine über die nächsten ${SERIE_WOCHEN} Wochen.`}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -310,6 +452,8 @@ export function EventSheet({ date, event, onClose }: { date: string; event?: Ene
           onSaved={(a) => {
             setCat(a.category)
             setActivityId(a.id)
+            if (titelAutomatisch) setTitle(a.name)
+            setListeFuer(null)
           }}
           onClose={() => setNewActivity(false)}
         />

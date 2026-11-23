@@ -25,8 +25,17 @@ nur ein Mensch tun, nicht der Rechner: Supabase (Datenbank) und Vercel
 
 ### Schema einspielen
 
-Im Supabase-Dashboard links auf **SQL Editor**, dann den kompletten Inhalt von
-`supabase/migrations/20260819000000_studie.sql` einfügen und ausführen.
+Im Supabase-Dashboard links auf **SQL Editor**, dann die Migrationen aus
+`supabase/migrations/` **der Reihe nach** einfügen und ausführen — eine nach
+der anderen, nicht aneinandergehängt:
+
+1. `20260819000000_studie.sql` — Tabellen und Zugriffsregeln
+2. `20260820000000_rolle_schuetzen.sql` — schützt Rolle und Code
+3. `20261123000000_signale.sql` — eigene Warnsignale
+
+Bei einem bestehenden Projekt fehlt nur die letzte. Die beiden ersten melden
+dann „already exists" und brechen ab — das ist kein Problem, aber führe sie
+eben nicht erneut aus.
 
 Das legt die Tabellen an und – wichtiger – die Zugriffsregeln:
 

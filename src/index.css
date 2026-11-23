@@ -1715,3 +1715,128 @@ input[type='range']::-moz-range-thumb {
 .signal-verwalten[open] summary::before {
   content: '▾ ';
 }
+
+/* ---------- Unteransicht im Termin-Dialog ---------- */
+
+/* Legt sich über das Formular, statt die Liste dazwischenzuschieben. */
+.unteransicht {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--bg);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: 18px 18px calc(18px + var(--safe-b));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.unteransicht-kopf {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.unteransicht-titel {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.unteransicht-liste {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 2px 14px;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Gewählte Aktivität im Formular ---------- */
+
+.gewaehlte-aktivitaet {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  text-align: left;
+  color: var(--ink-2);
+}
+
+.gewaehlte-aktivitaet .gewaehlt-name {
+  flex: 1;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.gewaehlte-aktivitaet .gewaehlt-name.muted {
+  color: var(--ink-3);
+}
+
+.gewaehlte-aktivitaet .ico {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+}
+
+.gewaehlte-aktivitaet.green .ico {
+  background: var(--green-tint);
+  color: var(--green);
+}
+.gewaehlte-aktivitaet.orange .ico {
+  background: var(--amber-tint);
+  color: var(--amber);
+}
+.gewaehlte-aktivitaet.red .ico {
+  background: var(--red-tint);
+  color: var(--red);
+}
+
+/* ---------- Titel und Zeitangaben ---------- */
+
+/* Der Titel trägt den Termin im Plan – deshalb kräftiger als die Nebenfelder. */
+.titel-feld {
+  font-weight: 600;
+}
+
+.lbl-ico {
+  display: inline-grid;
+  place-items: center;
+  vertical-align: -3px;
+  margin-right: 5px;
+  color: var(--ink-3);
+}
+
+/* ---------- Wochentage der Wiederholung ---------- */
+
+.wochentage {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.wochentag {
+  padding: 9px 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.wochentag.an {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
