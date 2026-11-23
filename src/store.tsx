@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { Activity, AppState, CheckIn, EnergyEvent, Profile, WarningLog } from './types'
-import { browserBackend, supabaseBackend, type Backend } from './lib/backend'
+import type { Activity, AppState, CheckIn, EnergyEvent, Profile, Signal, WarningLog } from './types'
+import { browserBackend, demoSichern, supabaseBackend, type Backend } from './lib/backend'
 import { seedState } from './lib/seed'
 import { studienModus } from './lib/supabase'
 import { useAuth } from './auth'
@@ -22,6 +22,8 @@ interface Store {
   removeSeriesFrom: (seriesId: string, fromDate: string) => void
   setCheckIn: (c: Omit<CheckIn, 'id'>) => void
   addWarning: (w: Omit<WarningLog, 'id'>) => void
+  upsertSignal: (sig: Omit<Signal, 'id'> & { id?: string }) => string
+  removeSignal: (id: string) => void
   reset: () => void
 }
 
@@ -32,15 +34,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(seedState)
   const [laedt, setLaedt] = useState(true)
   const [fehler, setFehler] = useState<string | null>(null)
-  const zustandRef = useRef(state)
-  zustandRef.current = state
-
   // Nur die Kennung, nicht das ganze Sitzungsobjekt: Supabase erneuert den
   // Token regelmaessig und meldet dabei eine neue Sitzung. Haenge der Store am
   // Objekt, wuerde er sich dabei jedesmal neu aufbauen -- mitten im Eintragen.
   const userId = studienModus ? sitzung?.userId ?? null : null
   const backend: Backend = useMemo(
-    () => (userId ? supabaseBackend(userId) : browserBackend(() => zustandRef.current)),
+    () => (userId ? supabaseBackend(userId) : browserBackend()),
     [userId],
   )
 
@@ -62,6 +61,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           geladen = { ...geladen, activities: start }
           for (const a of start) await backend.aktivitaetSpeichern(a)
         }
+        // Dasselbe fuer die Warnsignale. Getrennt geprueft, damit bestehende
+        // Zugaenge die Liste nachtraeglich bekommen.
+        if (studienModus && geladen.signals.length === 0) {
+          const start = seedState().signals.map((sig) => ({ ...sig, id: id() }))
+          geladen = { ...geladen, signals: start }
+          for (const sig of start) await backend.signalSpeichern(sig)
+        }
         setState(geladen)
         setLaedt(false)
       })
@@ -74,6 +80,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       abgebrochen = true
     }
   }, [backend])
+
+  // Im Demo-Modus erst sichern, wenn der neue Zustand steht. Aus dem
+  // State-Updater heraus waere es der vorherige gewesen.
+  useEffect(() => {
+    if (studienModus || laedt) return
+    demoSichern(state)
+  }, [state, laedt])
 
   const store = useMemo<Store>(
     () => ({
@@ -155,12 +168,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           sichern(backend.warnungSpeichern(neu))
           return { ...s, warnings: [neu, ...s.warnings].slice(0, 200) }
         }),
+      upsertSignal: (sig) => {
+        const sid = sig.id ?? id()
+        setState((s) => {
+          const vorhanden = sig.id && s.signals.some((x) => x.id === sig.id)
+          const neu = vorhanden
+            ? { ...s, signals: s.signals.map((x) => (x.id === sig.id ? ({ ...x, ...sig } as Signal) : x)) }
+            : { ...s, signals: [...s.signals, { ...sig, id: sid } as Signal] }
+          sichern(backend.signalSpeichern(neu.signals.find((x) => x.id === sid)!))
+          return neu
+        })
+        return sid
+      },
+      removeSignal: (sid) =>
+        setState((s) => {
+          sichern(backend.signalLoeschen(sid))
+          return { ...s, signals: s.signals.filter((x) => x.id !== sid) }
+        }),
       reset: () => {
         sichern(backend.alleDatenLoeschen())
         const frisch = seedState()
-        const mitIds = { ...frisch, activities: frisch.activities.map((a) => ({ ...a, id: id() })) }
+        const mitIds = {
+          ...frisch,
+          activities: frisch.activities.map((a) => ({ ...a, id: id() })),
+          signals: frisch.signals.map((sig) => ({ ...sig, id: id() })),
+        }
         setState(mitIds)
-        if (studienModus) for (const a of mitIds.activities) sichern(backend.aktivitaetSpeichern(a))
+        if (studienModus) {
+          for (const a of mitIds.activities) sichern(backend.aktivitaetSpeichern(a))
+          for (const sig of mitIds.signals) sichern(backend.signalSpeichern(sig))
+        }
       },
     }),
     [state, laedt, fehler, backend, sichern],

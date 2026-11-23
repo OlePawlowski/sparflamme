@@ -35,6 +35,19 @@ export interface CheckIn {
   note?: string
 }
 
+/**
+ * Ein waehlbares Warnsignal. Die Startliste stammt aus dem Konzept der
+ * Studienleitung; Teilnehmende koennen eigene ergaenzen, weil sich
+ * Reizueberflutung sehr unterschiedlich ankuendigt.
+ */
+export interface Signal {
+  id: string
+  name: string
+  /** 'warn' = noch handelbar, 'stop' = bitte abbrechen. */
+  severity: 'warn' | 'stop'
+  icon: string
+}
+
 export interface WarningLog {
   id: string
   /** ISO timestamp */
@@ -63,4 +76,5 @@ export interface AppState {
   events: EnergyEvent[]
   checkIns: CheckIn[]
   warnings: WarningLog[]
+  signals: Signal[]
 }

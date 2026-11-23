@@ -1,4 +1,4 @@
-import type { Activity, AppState, CheckIn, EnergyEvent, Profile, WarningLog } from '../types'
+import type { Activity, AppState, CheckIn, EnergyEvent, Profile, Signal, WarningLog } from '../types'
 import { seedState } from './seed'
 import { supabase } from './supabase'
 
@@ -15,6 +15,8 @@ export interface Backend {
   termineLoeschen(ids: string[]): Promise<void>
   checkInSpeichern(c: CheckIn): Promise<void>
   warnungSpeichern(w: WarningLog): Promise<void>
+  signalSpeichern(sig: Signal): Promise<void>
+  signalLoeschen(id: string): Promise<void>
   alleDatenLoeschen(): Promise<void>
 }
 
@@ -22,11 +24,22 @@ export interface Backend {
 
 const KEY = 'sparflamme.v1'
 
-/** Legt den kompletten Zustand im Browser ab – nur für Entwicklung und Demo. */
-export function browserBackend(zustand: () => AppState): Backend {
-  const sichern = async () => {
-    localStorage.setItem(KEY, JSON.stringify(zustand()))
-  }
+/** Schreibt den kompletten Zustand in den Browser-Speicher. */
+export function demoSichern(zustand: AppState) {
+  localStorage.setItem(KEY, JSON.stringify(zustand))
+}
+
+/**
+ * Ablage im Browser – nur für Entwicklung und Demo.
+ *
+ * Die Schreibmethoden tun hier bewusst nichts: sie werden aus dem
+ * State-Updater heraus aufgerufen, wo der neue Zustand noch nicht steht. Eine
+ * Sicherung von dort heraus hätte den Stand *vor* der Änderung geschrieben und
+ * damit jede letzte Aktion beim Neuladen verschluckt. Gesichert wird deshalb
+ * im Store, sobald der Zustand tatsächlich steht (siehe demoSichern).
+ */
+export function browserBackend(): Backend {
+  const nichts = async () => {}
   return {
     async laden() {
       try {
@@ -40,18 +53,21 @@ export function browserBackend(zustand: () => AppState): Backend {
           events: parsed.events ?? [],
           checkIns: parsed.checkIns ?? [],
           warnings: parsed.warnings ?? [],
+          signals: parsed.signals?.length ? parsed.signals : base.signals,
         }
       } catch {
         return seedState()
       }
     },
-    profilSpeichern: sichern,
-    aktivitaetSpeichern: sichern,
-    aktivitaetLoeschen: sichern,
-    termineSpeichern: sichern,
-    termineLoeschen: sichern,
-    checkInSpeichern: sichern,
-    warnungSpeichern: sichern,
+    profilSpeichern: nichts,
+    aktivitaetSpeichern: nichts,
+    aktivitaetLoeschen: nichts,
+    termineSpeichern: nichts,
+    termineLoeschen: nichts,
+    checkInSpeichern: nichts,
+    warnungSpeichern: nichts,
+    signalSpeichern: nichts,
+    signalLoeschen: nichts,
     async alleDatenLoeschen() {
       localStorage.removeItem(KEY)
     },
@@ -88,6 +104,13 @@ const alsCheckIn = (r: Record<string, unknown>): CheckIn => ({
   note: (r.note as string) ?? undefined,
 })
 
+const alsSignal = (r: Record<string, unknown>): Signal => ({
+  id: r.id as string,
+  name: r.name as string,
+  severity: r.severity as Signal['severity'],
+  icon: (r.icon as string) ?? 'alert',
+})
+
 const alsWarnung = (r: Record<string, unknown>): WarningLog => ({
   id: r.id as string,
   at: r.at as string,
@@ -104,18 +127,20 @@ export function supabaseBackend(userId: string): Backend {
   const db = supabase!
   return {
     async laden() {
-      const [profil, aktivitaeten, termine, checkIns, warnungen] = await Promise.all([
+      const [profil, aktivitaeten, termine, checkIns, warnungen, signale] = await Promise.all([
         db.from('profiles').select('*').eq('id', userId).single(),
         db.from('activities').select('*').eq('user_id', userId).order('created_at'),
         db.from('events').select('*').eq('user_id', userId),
         db.from('check_ins').select('*').eq('user_id', userId),
         db.from('warnings').select('*').eq('user_id', userId).order('at', { ascending: false }),
+        db.from('signals').select('*').eq('user_id', userId).order('created_at'),
       ])
       pruefe(profil.error, 'Profil laden')
       pruefe(aktivitaeten.error, 'Aktivitäten laden')
       pruefe(termine.error, 'Termine laden')
       pruefe(checkIns.error, 'Check-ins laden')
       pruefe(warnungen.error, 'Warnsignale laden')
+      pruefe(signale.error, 'Signalliste laden')
 
       const p = profil.data!
       const basis = seedState().profile
@@ -136,6 +161,7 @@ export function supabaseBackend(userId: string): Backend {
         events: (termine.data ?? []).map(alsTermin),
         checkIns: (checkIns.data ?? []).map(alsCheckIn),
         warnings: (warnungen.data ?? []).map(alsWarnung),
+        signals: (signale.data ?? []).map(alsSignal),
       }
     },
 
@@ -219,9 +245,25 @@ export function supabaseBackend(userId: string): Backend {
       pruefe(error, 'Warnsignal speichern')
     },
 
+    async signalSpeichern(sig) {
+      const { error } = await db.from('signals').upsert({
+        id: sig.id,
+        user_id: userId,
+        name: sig.name,
+        severity: sig.severity,
+        icon: sig.icon,
+      })
+      pruefe(error, 'Signal speichern')
+    },
+
+    async signalLoeschen(id) {
+      const { error } = await db.from('signals').delete().eq('id', id)
+      pruefe(error, 'Signal löschen')
+    },
+
     async alleDatenLoeschen() {
       // Reihenfolge egal, alles haengt per Fremdschluessel am Nutzer.
-      for (const tabelle of ['events', 'check_ins', 'warnings', 'activities']) {
+      for (const tabelle of ['events', 'check_ins', 'warnings', 'activities', 'signals']) {
         const { error } = await db.from(tabelle).delete().eq('user_id', userId)
         pruefe(error, `${tabelle} löschen`)
       }

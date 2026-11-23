@@ -26,6 +26,7 @@ export function ProbandDetail({ daten, onBack }: { daten: ProbandenDaten; onBack
       events: daten.events,
       checkIns: daten.checkIns,
       warnings: [],
+      signals: [],
     }
     return [...menge].sort().map((tag) => {
       const kurve = buildDayCurve(zustand, tag, null)

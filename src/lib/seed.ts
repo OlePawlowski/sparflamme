@@ -1,21 +1,24 @@
-import type { Activity, AppState, EnergyEvent, Profile } from '../types'
+import type { Activity, AppState, EnergyEvent, Profile, Signal } from '../types'
 
-export const WARNING_SIGNALS_WARN = [
-  'Innere Unruhe / Nervosität',
-  'Gedankenrasen',
-  'Schwere oder tränende Augen',
-  'Gähnen',
-  'Langsames Sprechen / Stottern',
-]
+/**
+ * Startliste der Warnsignale aus dem Konzept der Studienleitung. Sie wird beim
+ * ersten Anmelden angelegt und ist danach wie die Aktivitaeten veraenderbar --
+ * Teilnehmende koennen eigene ergaenzen.
+ */
+export const defaultSignals: Signal[] = [
+  { id: 's-unruhe', name: 'Innere Unruhe / Nervosität', severity: 'warn', icon: 'zap' },
+  { id: 's-gedanken', name: 'Gedankenrasen', severity: 'warn', icon: 'brain' },
+  { id: 's-augen', name: 'Schwere oder tränende Augen', severity: 'warn', icon: 'glasses' },
+  { id: 's-gaehnen', name: 'Gähnen', severity: 'warn', icon: 'moon' },
+  { id: 's-sprechen', name: 'Langsames Sprechen / Stottern', severity: 'warn', icon: 'message' },
 
-export const WARNING_SIGNALS_STOP = [
-  'Augenschmerzen, Blitze in den Augen',
-  'Keine Kraft in den Händen, schwere Beine',
-  'Herzflimmern, Atemnot',
-  'Impulsives Sprechen, Aggressivität, Wut, Zittern',
-  'Zusammenhangslos reden / Faden verlieren',
-  'Starke motorische Schwierigkeiten (Stolpern, Sachen fallen aus der Hand)',
-  'Kopfschmerzen / Migräne, Sekundenschlaf',
+  { id: 's-augenschmerz', name: 'Augenschmerzen, Blitze in den Augen', severity: 'stop', icon: 'glasses' },
+  { id: 's-kraftlos', name: 'Keine Kraft in den Händen, schwere Beine', severity: 'stop', icon: 'heartpulse' },
+  { id: 's-herz', name: 'Herzflimmern, Atemnot', severity: 'stop', icon: 'heartpulse' },
+  { id: 's-impuls', name: 'Impulsives Sprechen, Aggressivität, Wut, Zittern', severity: 'stop', icon: 'zap' },
+  { id: 's-faden', name: 'Zusammenhangslos reden / Faden verlieren', severity: 'stop', icon: 'message' },
+  { id: 's-motorik', name: 'Starke motorische Schwierigkeiten (Stolpern, Sachen fallen aus der Hand)', severity: 'stop', icon: 'walk' },
+  { id: 's-kopf', name: 'Kopfschmerzen / Migräne, Sekundenschlaf', severity: 'stop', icon: 'thermometer' },
 ]
 
 const defaultActivities: Activity[] = [
@@ -56,6 +59,7 @@ export function seedState(): AppState {
     events: [],
     checkIns: [],
     warnings: [],
+    signals: defaultSignals,
   }
 }
 

@@ -1595,3 +1595,123 @@ input[type='range']::-moz-range-thumb {
   color: var(--green);
   background: var(--green-soft, var(--surface));
 }
+
+/* ---------- Warnsignale in der Energiekurve ---------- */
+
+.warn-zeile {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.warn-zeile:last-child {
+  border-bottom: none;
+}
+
+.warn-zeile .dot {
+  margin-top: 5px;
+}
+
+.warn-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.warn-signale {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.warn-meta {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+/* ---------- Warnsignal-Auswahl ---------- */
+
+.signal-liste {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 2px 12px;
+  box-shadow: var(--shadow);
+}
+
+.signal-zeile {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 2px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.signal-zeile:last-child {
+  border-bottom: none;
+}
+
+.signal-name {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+.signal-zeile .ico {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+}
+
+.signal-zeile.amber .ico {
+  background: var(--amber-tint);
+  color: var(--amber);
+}
+
+.signal-zeile.red .ico {
+  background: var(--red-tint);
+  color: var(--red);
+}
+
+/* Ausgewählt: die ganze Zeile tönt sich, nicht nur der Punkt – auf dem Handy
+   ist ein kleiner Radiopunkt allein schwer zu erkennen. */
+.signal-zeile.amber.an {
+  background: var(--amber-tint);
+}
+
+.signal-zeile.red.an {
+  background: var(--red-tint);
+}
+
+.signal-verwalten {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.signal-verwalten summary {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.signal-verwalten summary::-webkit-details-marker {
+  display: none;
+}
+
+.signal-verwalten summary::before {
+  content: '▸ ';
+}
+
+.signal-verwalten[open] summary::before {
+  content: '▾ ';
+}

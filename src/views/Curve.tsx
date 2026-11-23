@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { AktivitaetsIcon } from '../components/AktivitaetsIcon'
+import { Icon } from '../components/Icon'
 import {
   addDays,
   buildDayCurve,
@@ -17,7 +18,7 @@ type Range = 'day' | 'week' | 'month'
 const W = 340
 const H = 170
 const PAD_L = 30
-const PAD_B = 22
+const PAD_B = 28
 
 interface Pt {
   x: number
@@ -26,7 +27,20 @@ interface Pt {
   forecast?: boolean
 }
 
-function LineChart({ points, markers }: { points: Pt[]; markers?: { x: number; label: string }[] }) {
+interface Warnmarke {
+  x: number
+  severity: 'warn' | 'stop'
+}
+
+function LineChart({
+  points,
+  markers,
+  warnmarken,
+}: {
+  points: Pt[]
+  markers?: { x: number; label: string }[]
+  warnmarken?: Warnmarke[]
+}) {
   if (points.length < 2) return <div className="empty-state">Noch zu wenig Daten.</div>
 
   const xs = points.map((p) => p.x)
@@ -50,7 +64,12 @@ function LineChart({ points, markers }: { points: Pt[]; markers?: { x: number; l
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Energieverlauf">
-      <rect x={PAD_L} y={sy(25)} width={W - PAD_L - 8} height={sy(0) - sy(25)} fill="#a8443a" opacity="0.05" />
+      {/* Drei Baender hinter der Kurve: ueber 50 geht es gut, zwischen 25 und 50
+          wird es knapp, darunter ist Schluss. Dieselben Grenzen wie levelBand,
+          damit Farbe und Beschriftung dasselbe sagen. */}
+      <rect x={PAD_L} y={sy(100)} width={W - PAD_L - 8} height={sy(50) - sy(100)} fill="#3f7a58" opacity="0.07" />
+      <rect x={PAD_L} y={sy(50)} width={W - PAD_L - 8} height={sy(25) - sy(50)} fill="#a8762a" opacity="0.08" />
+      <rect x={PAD_L} y={sy(25)} width={W - PAD_L - 8} height={sy(0) - sy(25)} fill="#a8443a" opacity="0.09" />
 
       {[0, 25, 50, 100].map((v) => (
         <g key={v}>
@@ -81,10 +100,31 @@ function LineChart({ points, markers }: { points: Pt[]; markers?: { x: number; l
         <path d={path(solid)} fill="none" stroke="#1e1c1a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       )}
 
+      {/* Warnsignale sitzen auf der Zeitachse, damit sichtbar wird, wann im
+          Tagesverlauf sie aufgetreten sind. */}
+      {warnmarken?.map((m, i) => (
+        <g key={`w${i}`}>
+          <line
+            x1={sx(m.x)}
+            x2={sx(m.x)}
+            y1={8}
+            y2={H - PAD_B}
+            stroke={m.severity === 'stop' ? '#a8443a' : '#a8762a'}
+            strokeWidth="1.4"
+            strokeDasharray="2 3"
+            opacity="0.75"
+          />
+          <polygon
+            points={`${sx(m.x) - 4},${H - PAD_B} ${sx(m.x) + 4},${H - PAD_B} ${sx(m.x)},${H - PAD_B - 6}`}
+            fill={m.severity === 'stop' ? '#a8443a' : '#a8762a'}
+          />
+        </g>
+      ))}
+
       {points
         .filter((_, i) => i % Math.ceil(points.length / 6) === 0)
         .map((p, i) => (
-          <text key={i} x={sx(p.x)} y={H - 6} fontSize="9" fill="#98938c" textAnchor="middle">
+          <text key={i} x={sx(p.x)} y={H - 4} fontSize="12" fontWeight="600" fill="#6a6660" textAnchor="middle">
             {p.label}
           </text>
         ))}
@@ -130,6 +170,37 @@ export function Curve() {
     [state.events, range, today],
   )
 
+  /**
+   * Warnsignale des gewaehlten Zeitraums, angereichert um die Taetigkeit, die
+   * zum Zeitpunkt der Erfassung lief. Die Studienleitung wollte sie in der
+   * Kurve mitsehen -- mit Uhrzeit und Taetigkeit, nicht nur als Liste.
+   */
+  const warnungen = useMemo(() => {
+    const vonTag = range === 'day' ? today : addDays(today, -(range === 'week' ? 6 : 29))
+    return state.warnings
+      .map((w) => {
+        const d = new Date(w.at)
+        const tag = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        const minute = d.getHours() * 60 + d.getMinutes()
+        const laufend = state.events.find(
+          (e) => e.date === tag && minute >= e.start && minute < e.start + e.durationMin,
+        )
+        const aktivitaet = laufend ? state.activities.find((a) => a.id === laufend.activityId) : undefined
+        return { ...w, tag, minute, taetigkeit: laufend?.title || aktivitaet?.name, icon: aktivitaet?.icon }
+      })
+      .filter((w) => w.tag >= vonTag && w.tag <= today)
+      .sort((a, b) => b.at.localeCompare(a.at))
+  }, [state.warnings, state.events, state.activities, range, today])
+
+  /** Nur Tagesansicht hat eine Zeitachse, auf der sich Marken verorten lassen. */
+  const warnmarken = useMemo<Warnmarke[]>(
+    () =>
+      range === 'day'
+        ? warnungen.filter((w) => w.tag === today).map((w) => ({ x: w.minute, severity: w.severity }))
+        : [],
+    [warnungen, range, today],
+  )
+
   const drains = useMemo(() => {
     const from = addDays(today, -29)
     const totals = new Map<string, number>()
@@ -171,10 +242,11 @@ export function Curve() {
         </div>
 
         <div className="card">
-          <LineChart points={points} markers={markers} />
+          <LineChart points={points} markers={markers} warnmarken={warnmarken} />
           <div className="legend" style={{ marginTop: 8, justifyContent: 'center' }}>
             <span>— erfasst</span>
             <span style={{ color: 'var(--ink-3)' }}>--- Prognose</span>
+            {warnmarken.length > 0 && <span style={{ color: 'var(--amber)' }}>▲ Warnsignal</span>}
           </div>
         </div>
 
@@ -218,17 +290,30 @@ export function Curve() {
           ))}
         </div>
 
-        {state.warnings.length > 0 && (
+        {warnungen.length > 0 && (
           <>
-            <p className="section-title">Zuletzt erfasste Warnsignale</p>
+            <p className="section-title">
+              <Icon name="alert" size={15} />
+              Warnsignale in diesem Zeitraum
+            </p>
             <div className="card">
-              {state.warnings.slice(0, 5).map((w) => (
-                <div key={w.id} className="act-row">
+              {warnungen.slice(0, 8).map((w) => (
+                <div key={w.id} className="warn-zeile">
                   <span className={`dot ${w.severity === 'stop' ? 'red' : 'orange'}`} />
-                  <span style={{ flex: 1, fontSize: 13 }}>{w.signals.join(', ')}</span>
-                  <span className="tiny">
-                    {new Date(w.at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
+                  <span className="warn-text">
+                    <span className="warn-signale">{w.signals.join(', ')}</span>
+                    <span className="warn-meta">
+                      {fmtTime(w.minute)} Uhr
+                      {range !== 'day' &&
+                        ` · ${dateFromKey(w.tag).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}`}
+                      {w.taetigkeit ? ` · ${w.taetigkeit}` : ' · keine Tätigkeit eingetragen'}
+                    </span>
                   </span>
+                  {w.icon && (
+                    <span className="ico">
+                      <AktivitaetsIcon name={w.icon} size={20} />
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

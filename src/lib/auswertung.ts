@@ -164,6 +164,7 @@ export function tagesverlaufAlsCsv(alle: ProbandenDaten[]): string {
         events: d.events,
         checkIns: d.checkIns,
         warnings: [],
+      signals: [],
       }
       const kurve = buildDayCurve(zustand, tag, null)
       const termineDesTages = d.events.filter((e) => e.date === tag)
