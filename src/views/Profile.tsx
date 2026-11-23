@@ -20,79 +20,106 @@ export function Profile() {
   const { state } = useStore()
   const [sheet, setSheet] = useState<{ open: boolean; activity?: Activity } | null>(null)
   const [signalSheet, setSignalSheet] = useState(false)
-  // Listen bleiben zu, bis die Kategorie angetippt wird – so ist die Seite ruhig.
+  // Eine angetippte Kategorie oeffnet sich als eigene Ansicht. Frueher klappte
+  // sie zwischen den anderen auf; die Studienleitung wollte, dass man dann nur
+  // noch die angetippte sieht.
   const [offen, setOffen] = useState<Category | null>(null)
 
   return (
     <>
       <div className="appbar">
-        <div className="row" style={{ gap: 10 }}>
-          <Logo size={30} />
-          <div>
-            <h1>Sparflamme</h1>
-            <p className="sub">Deine Aktivitäten</p>
+        {offen ? (
+          <div className="row" style={{ gap: 10 }}>
+            <button className="btn icon" aria-label="Zurück zur Übersicht" onClick={() => setOffen(null)}>
+              <Icon name="arrowLeft" size={18} />
+            </button>
+            <div>
+              <h1>{CAT_LABEL[offen]}</h1>
+              <p className="sub">{CATS.find((c) => c.key === offen)?.hint}</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="row" style={{ gap: 10 }}>
+            <Logo size={30} />
+            <div>
+              <h1>Sparflamme</h1>
+              <p className="sub">Deine Aktivitäten</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="scroll">
-        <button className="card big-row" onClick={() => setSignalSheet(true)}>
-          <span className="big-ico amber">
-            <Icon name="alert" size={26} />
-          </span>
-          <span style={{ flex: 1, textAlign: 'left' }}>
-            <span style={{ display: 'block', fontSize: 15, fontWeight: 500 }}>Warnsignale erfassen</span>
-            <span className="muted">Reizüberflutung früh erkennen</span>
-          </span>
-          <Icon name="chevron" size={18} />
-        </button>
+        {!offen && (
+          <>
+            <button className="card big-row" onClick={() => setSignalSheet(true)}>
+              <span className="big-ico amber">
+                <Icon name="alert" size={26} />
+              </span>
+              <span style={{ flex: 1, textAlign: 'left' }}>
+                <span style={{ display: 'block', fontSize: 15, fontWeight: 500 }}>Warnsignale erfassen</span>
+                <span className="muted">Reizüberflutung früh erkennen</span>
+              </span>
+              <Icon name="chevron" size={18} />
+            </button>
 
-        {CATS.map((c) => {
-          const aktivitaeten = state.activities.filter((a) => a.category === c.key)
-          const aufgeklappt = offen === c.key
-          return (
-            <div key={c.key} className={`kategorie ${CAT_CLASS[c.key]} ${aufgeklappt ? 'auf' : ''}`}>
-              <button className="kategorie-kopf" onClick={() => setOffen(aufgeklappt ? null : c.key)}>
-                <span className="big-ico">
-                  <Icon name={CAT_ICON[c.key]} size={26} />
-                </span>
-                <span style={{ flex: 1, textAlign: 'left' }}>
-                  <span className="kategorie-name">{CAT_LABEL[c.key]}</span>
-                  <span className="muted">{c.hint}</span>
-                </span>
-                <span className="kategorie-zahl">{aktivitaeten.length}</span>
-                <span className={`kategorie-pfeil ${aufgeklappt ? 'auf' : ''}`}>
-                  <Icon name="chevron" size={18} />
-                </span>
-              </button>
-
-              {aufgeklappt && (
-                <div className="kategorie-inhalt">
-                  {aktivitaeten.map((a) => (
-                    <button
-                      key={a.id}
-                      className={`act-row ${a.category}`}
-                      onClick={() => setSheet({ open: true, activity: a })}
-                    >
-                      <span className="ico">
-                        <AktivitaetsIcon name={a.icon} size={24} />
-                      </span>
-                      <span style={{ flex: 1, fontSize: 14.5 }}>{a.name}</span>
-                      <span className={`delta ${a.ratePer30 > 0 ? 'pos' : a.ratePer30 < 0 ? 'neg' : 'zero'}`}>
-                        {a.ratePer30 > 0 ? '+' : ''}
-                        {a.ratePer30}% / 30 Min
-                      </span>
-                    </button>
-                  ))}
-                  <button className="btn sm block" style={{ marginTop: 12 }} onClick={() => setSheet({ open: true })}>
-                    <Icon name="plus" size={16} />
-                    Aktivität hinzufügen
+            {CATS.map((c) => {
+              const anzahl = state.activities.filter((a) => a.category === c.key).length
+              return (
+                <div key={c.key} className={`kategorie ${CAT_CLASS[c.key]}`}>
+                  <button className="kategorie-kopf" onClick={() => setOffen(c.key)}>
+                    <span className="big-ico">
+                      <Icon name={CAT_ICON[c.key]} size={26} />
+                    </span>
+                    <span style={{ flex: 1, textAlign: 'left' }}>
+                      <span className="kategorie-name">{CAT_LABEL[c.key]}</span>
+                      <span className="muted">{c.hint}</span>
+                    </span>
+                    <span className="kategorie-zahl">{anzahl}</span>
+                    <span className="kategorie-pfeil">
+                      <Icon name="chevron" size={18} />
+                    </span>
                   </button>
                 </div>
+              )
+            })}
+          </>
+        )}
+
+        {offen && (
+          <>
+            {/* Oben, nicht unter der Liste: sonst muesste man erst durch alle
+                Eintraege scrollen, um etwas Neues anzulegen. */}
+            <button className="btn primary block" onClick={() => setSheet({ open: true })}>
+              <Icon name="plus" size={16} />
+              Neue Aktivität anlegen
+            </button>
+
+            <div className="card" style={{ marginTop: 10, padding: '2px 14px' }}>
+              {state.activities
+                .filter((a) => a.category === offen)
+                .map((a) => (
+                  <button
+                    key={a.id}
+                    className={`act-row ${a.category}`}
+                    onClick={() => setSheet({ open: true, activity: a })}
+                  >
+                    <span className="ico">
+                      <AktivitaetsIcon name={a.icon} size={24} />
+                    </span>
+                    <span style={{ flex: 1, fontSize: 14.5 }}>{a.name}</span>
+                    <span className={`delta ${a.ratePer30 > 0 ? 'pos' : a.ratePer30 < 0 ? 'neg' : 'zero'}`}>
+                      {a.ratePer30 > 0 ? '+' : ''}
+                      {a.ratePer30}% / 30 Min
+                    </span>
+                  </button>
+                ))}
+              {state.activities.filter((a) => a.category === offen).length === 0 && (
+                <div className="empty-state">Hier ist noch nichts eingetragen.</div>
               )}
             </div>
-          )
-        })}
+          </>
+        )}
       </div>
 
       {sheet?.open && (

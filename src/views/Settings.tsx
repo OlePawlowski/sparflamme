@@ -49,7 +49,9 @@ export function Settings({ onBack }: { onBack: () => void }) {
 
       <div className="scroll">
         <p className="section-title gross">
-          <Icon name="user" size={15} />
+          <span className="titel-ico gruen">
+            <Icon name="user" size={19} />
+          </span>
           Über dich
         </p>
         <div className="card">
@@ -91,7 +93,9 @@ export function Settings({ onBack }: { onBack: () => void }) {
         </div>
 
         <p className="section-title gross">
-          <Icon name="bed" size={15} />
+          <span className="titel-ico blau">
+            <Icon name="bed" size={19} />
+          </span>
           Schlafenszeitraum
         </p>
         <div className="card">
@@ -118,7 +122,9 @@ export function Settings({ onBack }: { onBack: () => void }) {
         </div>
 
         <p className="section-title gross">
-          <Icon name="sun" size={15} />
+          <span className="titel-ico bernstein">
+            <Icon name="sun" size={19} />
+          </span>
           Check-in-Anzeige
         </p>
         <div className="card">
@@ -136,7 +142,9 @@ export function Settings({ onBack }: { onBack: () => void }) {
         </div>
 
         <p className="section-title gross">
-          <Icon name="alert" size={15} />
+          <span className="titel-ico rot">
+            <Icon name="alert" size={19} />
+          </span>
           Benachrichtigungen
         </p>
         <div className="card">

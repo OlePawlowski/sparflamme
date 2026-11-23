@@ -170,10 +170,42 @@ p {
    dort tragen die Ueberschriften die Gliederung und duerfen nicht wie
    Kleingedrucktes wirken. */
 .section-title.gross {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--ink);
   margin-top: 30px;
-  gap: 9px;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Farbige Plakette statt blassem Strichsymbol: die Studienleitung wollte die
+   Ueberschriften farbiger. Der Text bleibt dunkel, damit er gut lesbar ist --
+   Farbe traegt hier die Gliederung, nicht den Inhalt. */
+.titel-ico {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+}
+
+/* Eigene, etwas kraeftigere Toene: die blassen Hauchtoene gehen auf dem jetzt
+   gruenlichen Hintergrund unter und die Plakette waere unsichtbar. */
+.titel-ico.gruen {
+  background: #dbeae0;
+  color: #2f6446;
+}
+.titel-ico.bernstein {
+  background: #f5e7cd;
+  color: #8a6020;
+}
+.titel-ico.rot {
+  background: #f4dbd8;
+  color: #8d3930;
+}
+.titel-ico.blau {
+  background: #f6ded0;
+  color: #9a4418;
 }
 
 .section-title {
